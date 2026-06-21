@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced RAG - Hybrid Retrieval Production Lesson</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a14;
+  --ink:#f4f1ea;
+  --ink-dim:#aaa5b8;
+  --ink-faint:#625d76;
+  --sky:#0ea5e9;
+  --emerald:#10b981;
+  --indigo:#6366f1;
+  --violet:#8b5cf6;
+  --amber:#f59e0b;
+  --rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.035);
+  --card-border:rgba(255,255,255,.09);
+  --panel:rgba(255,255,255,.025);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter Tight',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  overflow-x:hidden;
+  background-color: #0b0c10;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.08), transparent 25%);
+  background-attachment: fixed;
+}
+/* Removed the noisy blurred SVG overlay to keep it crisp */
+.container{max-width:1280px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{
+  font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.18em;
+  font-size:11px;
+  color:var(--ink-dim);
+}
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:80px 0 60px;
+  position:relative;
+}
+.hero .stage-num{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-weight:300;
+  font-size:14px;
+  color:var(--ink-faint);
+  margin-bottom:24px;
+}
+.hero h1{
+  font-size:clamp(48px,9vw,124px);
+  margin-bottom:32px;
+  background:linear-gradient(135deg,var(--sky),var(--emerald),var(--indigo));
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{
+  font-size:clamp(18px,2.2vw,24px);
+  max-width:830px;
+  color:var(--ink-dim);
+  margin-bottom:52px;
+  font-weight:300;
+}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1000px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:36px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+.scroll-hint{
+  position:absolute;
+  bottom:36px;
+  left:50%;
+  transform:translateX(-50%);
+  color:var(--ink-faint);
+  font-size:11px;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  animation:bob 2s ease-in-out infinite;
+}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+.tabs{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(10,10,20,.91);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--card-border);
+  padding:14px 0;
+}
+.tabs-inner{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.tab-btn{
+  font:600 12px 'JetBrains Mono',monospace;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:11px 14px;
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--card-border);
+  border-radius:4px;
+  color:var(--ink-dim);
+  cursor:pointer;
+}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stage{padding:96px 0;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:48px;align-items:start}
+.stage-num-big{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:64px;
+  line-height:1;
+  color:var(--accent);
+  font-weight:300;
+}
+.stage-title{
+  font-family:'Fraunces',serif;
+  font-weight:800;
+  font-size:clamp(34px,5vw,58px);
+  letter-spacing:-.03em;
+  line-height:1.05;
+  margin-bottom:12px;
+}
+.stage-kicker{font-size:18px;color:var(--ink-dim);font-weight:300;max-width:870px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:6px;
+  padding:28px;
+  backdrop-filter:blur(10px);
+}
+.card.accent{border-left:3px solid var(--accent)}
+.card h3,.card h4{font-family:'Fraunces',serif;font-size:25px;line-height:1.1;margin-bottom:12px}
+.card p,.card li{color:var(--ink-dim);font-size:17px;font-weight:300}
+.card ul{margin:14px 0 0 20px}
+.card li{margin-bottom:10px}
+.strong{color:var(--ink);font-weight:600}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+.pill{
+  font:700 11px 'JetBrains Mono',monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+  border-radius:4px;
+  padding:7px 9px;
+}
+.pipeline{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:8px;
+  margin:32px 0;
+}
+.pipe-step{
+  min-height:142px;
+  padding:16px;
+  border:1px solid var(--card-border);
+  background:var(--panel);
+  border-radius:6px;
+  position:relative;
+}
+.pipe-step:after{
+  content:"";
+  position:absolute;
+  right:-8px;
+  top:50%;
+  width:8px;
+  height:1px;
+  background:var(--card-border);
+}
+.pipe-step:last-child:after{display:none}
+.pipe-step .n{font:800 12px 'JetBrains Mono',monospace;color:var(--accent);margin-bottom:8px}
+.pipe-step h4{font-family:'Fraunces',serif;font-size:18px;margin-bottom:7px}
+.pipe-step p{font-size:14px;color:var(--ink-dim)}
+.router{
+  display:grid;
+  grid-template-columns:1fr 1.2fr;
+  gap:24px;
+  margin-top:24px;
+}
+.route-list{display:grid;gap:10px}
+.route{
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:14px;
+  padding:14px;
+  border:1px solid var(--card-border);
+  background:rgba(255,255,255,.025);
+  border-radius:5px;
+}
+.route .kind{font:800 12px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.route p{font-size:15px;color:var(--ink-dim)}
+.storage-map{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:24px;
+  align-items:stretch;
+}
+.store-box{
+  padding:28px;
+  border:1px solid var(--card-border);
+  border-radius:6px;
+  background:rgba(0,0,0,.2);
+}
+.store-box h3{font-family:'Fraunces',serif;font-size:31px;margin-bottom:12px}
+.store-box.vector{border-color:color-mix(in srgb,var(--emerald) 36%,var(--card-border))}
+.store-box.graph{border-color:color-mix(in srgb,var(--indigo) 36%,var(--card-border))}
+.store-box.bm25{border-color:color-mix(in srgb,var(--amber) 36%,var(--card-border))}
+.dots{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin:20px 0}
+.dot{aspect-ratio:1;border-radius:3px;background:linear-gradient(135deg,var(--emerald),var(--sky));opacity:.75}
+.nodes{position:relative;min-height:190px;margin:20px 0}
+.node{
+  position:absolute;
+  width:78px;
+  height:42px;
+  border:1px solid color-mix(in srgb,var(--indigo) 55%,white);
+  background:rgba(99,102,241,.14);
+  border-radius:5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:800 11px 'JetBrains Mono',monospace;
+}
+.edge{position:absolute;height:1px;background:rgba(255,255,255,.25);transform-origin:left center}
+.vocab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.term{
+  padding:18px;
+  border:1px solid var(--card-border);
+  border-radius:5px;
+  background:rgba(255,255,255,.025);
+}
+.term .word{font:800 13px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.term p{font-size:15px;color:var(--ink-dim)}
+.code-container { margin-top: 24px; background: #0d0d12; border: 1px solid var(--card-border); border-radius: 6px; overflow: hidden; }
+.code-header { padding: 8px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--card-border); font: 600 12px 'JetBrains Mono', monospace; color: var(--ink-dim); }
+pre { padding: 16px; margin: 0; overflow-x: auto; font: 400 13px/1.6 'JetBrains Mono', monospace; color: #e2e8f0; }
+.kw { color: #f472b6; }
+.fn { color: #38bdf8; }
+.st { color: #a3e635; }
+.cm { color: #64748b; font-style: italic; }
+.cl { color: #fbbf24; }
+.compare{width:100%;border-collapse:separate;border-spacing:0;margin-top:16px}
+.compare th{
+  font:700 11px 'JetBrains Mono',monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-dim);
+  text-align:left;
+  padding:13px 14px;
+  border-bottom:1px solid var(--card-border);
+}
+.compare td{padding:14px;border-bottom:1px solid var(--card-border);color:var(--ink-dim);vertical-align:top}
+.compare td:first-child{color:var(--ink);font-weight:700}
+.summary-band{
+  padding:42px;
+  border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),rgba(255,255,255,.025));
+  border-radius:6px;
+}
+.summary-band h3{font-family:'Fraunces',serif;font-size:34px;margin-bottom:18px}
+.summary-band li{font-size:18px;color:var(--ink-dim);margin:12px 0}
+@media(max-width:1060px){.pipeline{grid-template-columns:1fr 1fr}.pipe-step:after{display:none}}
+@media(max-width:900px){
+  .stats,.grid-2,.grid-3,.router,.storage-map,.vocab-grid,.pipeline{grid-template-columns:1fr}
+  .stage-header{grid-template-columns:1fr}
+  .route{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body style="--accent:var(--emerald)">
+<section class="hero">
+  <div class="container">
+    <div class="stage-num">Advanced RAG lesson for the multi-agent research system</div>
+    <h1 class="display">Hybrid <em>RAG</em></h1>
+    <p class="sub">RAG is the production pattern that lets an AI answer from evidence instead of memory. This lesson explains the full path: classify sources, choose chunking strategies, store meaning and relationships, transform vague questions, retrieve candidates, rerank them, cite them, and evaluate the result with scorecards.</p>
+    <div class="stats">
+      <div class="stat"><div class="num">6</div><div class="label">pipeline stages</div></div>
+      <div class="stat"><div class="num">5</div><div class="label">chunking modes</div></div>
+      <div class="stat"><div class="num">2</div><div class="label">retrieval families</div></div>
+      <div class="stat"><div class="num">1</div><div class="label">grounded answer</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">Start lesson</div>
+</section>
+
+<nav class="tabs">
+  <div class="container">
+    <div class="tabs-inner">
+      <button class="tab-btn active" data-tab="map">System Map</button>
+      <button class="tab-btn" data-tab="chunking">Classification + Chunking</button>
+      <button class="tab-btn" data-tab="storage">Vector, Graph, BM25</button>
+      <button class="tab-btn" data-tab="retrieval">Retrieval + Rerank</button>
+      <button class="tab-btn" data-tab="summary">Vocab + Summary</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="tab-panel active" id="panel-map">
+    <section class="stage" style="--accent:var(--emerald)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">01</div>
+          <div>
+            <h2 class="stage-title">RAG is an evidence pipeline, not a search box.</h2>
+            <p class="stage-kicker">The project's RAG folder teaches a production pattern: convert messy sources into structured retrievable evidence, retrieve the best context for a question, then generate facts and references from that context.</p>
+          </div>
+        </div>
+        <div class="pipeline">
+          <div class="pipe-step"><div class="n">1</div><h4>Sources</h4><p>Web snippets, local files, transcripts, notes, logs, and reports enter the pipeline.</p></div>
+          <div class="pipe-step"><div class="n">2</div><h4>Classify</h4><p>The system identifies document shape before choosing a parser.</p></div>
+          <div class="pipe-step"><div class="n">3</div><h4>Chunk</h4><p>Text is split into useful retrieval units with metadata attached.</p></div>
+          <div class="pipe-step"><div class="n">4</div><h4>Index</h4><p>Chunks become embeddings, vector records, and graph relationships.</p></div>
+          <div class="pipe-step"><div class="n">5</div><h4>Retrieve</h4><p>Hybrid search collects semantic, keyword, and relationship candidates.</p></div>
+          <div class="pipe-step"><div class="n">6</div><h4>Rerank</h4><p>A judge selects the most relevant context for the current question.</p></div>
+          <div class="pipe-step"><div class="n">7</div><h4>Answer</h4><p>The system extracts facts, builds references, and returns citations.</p></div>
+        </div>
+        <div class="grid-2">
+          <div class="card accent">
+            <h3>Why this matters</h3>
+            <p>LLMs remember general patterns, but production answers need local facts: your documents, your policies, your research notes, your sources, and your current evidence.</p>
+          </div>
+          <div class="card accent">
+            <h3>What students should notice</h3>
+            <p>The RAG design is modular. Each file owns exactly one responsibility: parser.py, chunker.py, indexer.py, pipeline.py, retriever.py, and evaluator.py.</p>
+          </div>
+        </div>
+        <p style="margin-top:32px; color:var(--ink-dim); font-size:16px;"><strong>Code Breakdown:</strong> The orchestration layer is purely about coordinating the specialized files. Notice how it seamlessly runs parsing, chunking, and index creation before caching the entire corpus in memory so it can be queried multiple times without rebuilding.</p>
+        <div class="code-container" style="margin-top:12px">
+          <div class="code-header">backend/rag_v2/pipeline.py (The Persistent Ingestion Pipeline)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">ingest_file</span>(file_path: <span class="cl">str</span>) -> <span class="cl">dict</span>:
+    <span class="cm">"""Takes a file, processes it, and saves it globally to the knowledge base."""</span>
+    <span class="fn">print</span>(f<span class="st">"\n=== Starting Upload Pipeline for: {file_path} ==="</span>)
+    
+    <span class="cm"># Step 1: Parse & Classify (PDFs, Markdown, Transcripts, etc.)</span>
+    parsed_dict = <span class="fn">parse_file</span>(file_path)
+    
+    <span class="cm"># Step 2: Chunk documents based on the chosen strategy</span>
+    chunk_dicts = <span class="fn">chunk_document</span>(parsed_dict)
+    
+    <span class="cm"># Step 3: Save to Global Vector, Graph, and BM25 Stores</span>
+    <span class="fn">index_chunks</span>(chunk_dicts)
+    
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"success"</span>, <span class="st">"chunks_created"</span>: <span class="cl">len</span>(chunk_dicts)}</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-chunking">
+    <section class="stage" style="--accent:var(--sky)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">02</div>
+          <div>
+            <h2 class="stage-title">Good retrieval starts before the database.</h2>
+            <p class="stage-kicker">The classifier looks at the shape of the content, then routes it to a chunking strategy. This is a production idea: do not treat every document like plain text.</p>
+          </div>
+        </div>
+        <div class="router">
+          <div class="card accent">
+            <h3>The chunking problem</h3>
+            <p>A chunk must be small enough to retrieve cheaply, but large enough to preserve meaning. Bad chunking separates questions from answers, headings from paragraphs, or error messages from their stack traces.</p>
+            <div class="pill-row"><span class="pill">context window</span><span class="pill">metadata</span><span class="pill">overlap</span></div>
+          </div>
+          <div class="route-list">
+            <div class="route"><div class="kind">HTML</div><p>Use structure-aware parsing so navigation, tags, and content blocks do not become noise.</p></div>
+            <div class="route"><div class="kind">Markdown</div><p>Preserve headings, bullet hierarchy, and section boundaries.</p></div>
+            <div class="route"><div class="kind">Transcript</div><p>Use semantic breaks because spoken content changes topics unevenly.</p></div>
+            <div class="route"><div class="kind">Logs</div><p>Use token-based splitting so dense technical traces stay bounded.</p></div>
+            <div class="route"><div class="kind">Reports</div><p>Use hierarchical chunks so broad sections and fine details both remain available.</p></div>
+          </div>
+        </div>
+        <table class="compare">
+          <thead><tr><th>Strategy</th><th>Best for</th><th>Risk it avoids</th></tr></thead>
+          <tbody>
+            <tr><td>Sentence splitting</td><td>Clean prose and simple articles.</td><td>Breaking sentences in unnatural places, keeping thoughts intact.</td></tr>
+            <tr><td>Semantic splitting</td><td>Interviews, transcripts, and topic-shifting text.</td><td>Mixing unrelated ideas in one chunk. Uses embeddings to detect topic shifts.</td></tr>
+            <tr><td>Hierarchical splitting</td><td>Dense reports, policies, and long references.</td><td>Losing the connection between section and detail. Maintains parent-child relationships.</td></tr>
+            <tr><td>Token splitting</td><td>Logs, traces, and compact technical text.</td><td>Overrunning the model context budget, ensuring exact size limits.</td></tr>
+            <tr><td>Markdown-aware splitting</td><td>Markdown files, readmes, and wikis.</td><td>Orphaning bullet points or splitting code blocks in half.</td></tr>
+            <tr><td>HTML/DOM-aware splitting</td><td>Web scraping and raw HTML documents.</td><td>Injecting useless tags into chunks; groups by logical divs/paragraphs.</td></tr>
+            <tr><td>Fixed-size with overlap</td><td>General unstructured data as a fallback.</td><td>Losing context at the exact boundary of a chunk by bleeding into the next.</td></tr>
+            <tr><td>Paragraph splitting</td><td>Books, essays, and dense literature.</td><td>Separating closely related sentences that form a single cohesive argument.</td></tr>
+            <tr><td>Regex/Delimiter splitting</td><td>Custom formats, EDI, or structured logs.</td><td>Breaking custom data formats by splitting indiscriminately.</td></tr>
+            <tr><td>AST (Code) splitting</td><td>Python, JS, Java source code.</td><td>Splitting a function or class definition in half, making it uncompilable or confusing.</td></tr>
+            <tr><td>Topic modeling splitting</td><td>Extremely long, rambling, unformatted text.</td><td>Arbitrary splits. Uses NLP to group by statistical topic coherence.</td></tr>
+            <tr><td>Table-aware splitting</td><td>Financial reports, CSVs, and Excel dumps.</td><td>Turning rows and columns into unreadable soup; keeps headers attached to rows.</td></tr>
+            <tr><td>Entity-based splitting</td><td>Knowledge graphs and intelligence reports.</td><td>Losing track of *who* is related to *what*. Groups text by the subjects mentioned.</td></tr>
+            <tr><td>Sliding window splitting</td><td>Time-series data and chat histories.</td><td>Losing the conversational flow. Keeps a rolling memory of the last N messages.</td></tr>
+            <tr><td>Page-level splitting</td><td>Scanned PDFs and physical document archives.</td><td>Mixing footnotes or page numbers across multiple pages of context.</td></tr>
+            <tr><td>Heading-level splitting</td><td>Legal contracts and technical manuals.</td><td>Losing the context of "Article 4, Section 2" when retrieving a deep sub-clause.</td></tr>
+            <tr><td>Agentic/LLM-driven chunking</td><td>Complex, high-value unstructured text.</td><td>Rigid rules failing. An LLM reads the text and decides where the logical breaks are.</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:32px; color:var(--ink-dim); font-size:16px;"><strong>Code Breakdown:</strong> Notice how the chunker avoids hardcoding a single splitting rule. By reading the classification tag from the parser, it dynamically selects between Semantic chunking (for transcripts), Hierarchical chunking (for long reports), or basic fallback strategies.</p>
+        <div class="code-container" style="margin-top:12px">
+          <div class="code-header">backend/rag_v2/chunker.py (Dynamic Splitting Strategies)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">chunk_document</span>(parsed_doc: <span class="cl">dict</span>) -> <span class="cl">list</span>[<span class="cl">dict</span>]:
+    <span class="cm">"""Split a parsed document into chunks based on its classified strategy."""</span>
+    strategy = parsed_doc[<span class="st">"chunk_strategy"</span>]
+    
+    <span class="kw">if</span> strategy == <span class="st">"markdown"</span>:
+        splitter = <span class="cl">MarkdownNodeParser</span>()
+    <span class="kw">elif</span> strategy == <span class="st">"html"</span>:
+        splitter = <span class="cl">HTMLNodeParser</span>()
+    <span class="kw">elif</span> strategy == <span class="st">"token"</span>:
+        splitter = <span class="cl">TokenTextSplitter</span>(chunk_size=<span class="st">512</span>, chunk_overlap=<span class="st">50</span>)
+    <span class="kw">elif</span> strategy == <span class="st">"semantic"</span>:
+        <span class="cm"># Semantic chunking splits when embedding similarity drops</span>
+        splitter = <span class="cl">SemanticSplitterNodeParser</span>(breakpoint_percentile_threshold=<span class="st">90</span>)
+    <span class="kw">else</span>:
+        splitter = <span class="cl">SentenceSplitter</span>(chunk_size=<span class="st">768</span>, chunk_overlap=<span class="st">80</span>)
+        
+    doc = <span class="cl">Document</span>(text=parsed_doc[<span class="st">"text"</span>], metadata=parsed_doc[<span class="st">"metadata"</span>])
+    <span class="kw">return</span> [{<span class="st">"id"</span>: n.node_id, <span class="st">"text"</span>: n.text, <span class="st">"metadata"</span>: n.metadata} <span class="kw">for</span> n <span class="kw">in</span> splitter.get_nodes_from_documents([doc])]</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-storage">
+    <section class="stage" style="--accent:var(--indigo)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">03</div>
+          <div>
+            <h2 class="stage-title">Tri-index storage captures meaning, relationships, and keywords.</h2>
+            <p class="stage-kicker">The project stores chunks in Chroma for vector search, uses a graph backend for relationship search, and builds a BM25 index for exact keyword matching (with a fallback graph store if Neo4j is offline).</p>
+          </div>
+        </div>
+        <div class="storage-map">
+          <div class="store-box vector">
+            <h3>Vector database</h3>
+            <p>Embeddings turn text into coordinates. Nearby vectors usually mean nearby meaning, so a question about "repairing an engine" can find text about "fixing a motor."</p>
+            <div class="dots">
+              <div class="dot"></div><div class="dot" style="opacity:.35"></div><div class="dot" style="opacity:.9"></div><div class="dot" style="opacity:.5"></div>
+              <div class="dot" style="opacity:.7"></div><div class="dot" style="opacity:.25"></div><div class="dot" style="opacity:.85"></div><div class="dot" style="opacity:.45"></div>
+              <div class="dot" style="opacity:.4"></div><div class="dot" style="opacity:.75"></div><div class="dot" style="opacity:.55"></div><div class="dot" style="opacity:.95"></div>
+              <div class="dot" style="opacity:.3"></div><div class="dot" style="opacity:.65"></div><div class="dot" style="opacity:.48"></div><div class="dot" style="opacity:.8"></div>
+            </div>
+            <div class="pill-row"><span class="pill">semantic search</span><span class="pill">similarity</span><span class="pill">embeddings</span></div>
+          </div>
+          <div class="store-box graph">
+            <h3>Graph database</h3>
+            <p>Graphs store entities and relationships. They help answer multi-hop questions where the connection matters more than word similarity.</p>
+            <div class="nodes">
+              <div class="edge" style="left:63px;top:58px;width:90px;transform:rotate(10deg)"></div>
+              <div class="edge" style="left:150px;top:88px;width:87px;transform:rotate(24deg)"></div>
+              <div class="edge" style="left:72px;top:130px;width:102px;transform:rotate(-18deg)"></div>
+              <div class="node" style="left:18px;top:38px">Person</div>
+              <div class="node" style="left:144px;top:58px">Company</div>
+              <div class="node" style="left:243px;top:124px">Product</div>
+              <div class="node" style="left:96px;top:140px">Policy</div>
+            </div>
+            <div class="pill-row"><span class="pill">nodes</span><span class="pill">edges</span><span class="pill">multi-hop</span></div>
+          </div>
+          <div class="store-box bm25">
+            <h3>BM25 Keyword Index</h3>
+            <p>While Vectors look at meaning, BM25 looks at exact keyword matches using TF-IDF. It acts as a safety net: if a user searches for an exact product ID like "ERR-409", the vector model might misunderstand the meaning, but BM25 will find the exact string immediately.</p>
+            <div class="pill-row"><span class="pill">keyword match</span><span class="pill">tf-idf</span><span class="pill">exact terms</span></div>
+          </div>
+        </div>
+        <div class="card accent" style="margin-top:24px">
+          <h3>Production robustness</h3>
+          <p>The storage layer is built to degrade gracefully. If the graph database is configured, the system uses it. If not, it falls back to a simple local graph store so the learning demo still works.</p>
+        </div>
+        <p style="margin-top:32px; color:var(--ink-dim); font-size:16px;"><strong>Code Breakdown:</strong> The indexer iterates over the chunks just once, but maps them into three distinct mathematical representations: a Vector Index for meaning, a Knowledge Graph for connections, and a BM25 store (handled dynamically) for exact string matching. Notice how BM25 isn't saved to a database—it's built in-memory on the fly during retrieval using the `processed_nodes` returned here.</p>
+        <div class="code-container" style="margin-top:12px">
+          <div class="code-header">backend/rag_v2/indexer.py (Tri-Index Creation)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">index_chunks</span>(chunks: <span class="cl">list</span>[<span class="cl">dict</span>]):
+    <span class="cm">"""Save chunks persistently to global Vector, Graph, and BM25 stores."""</span>
+    storage = <span class="fn">get_global_storage</span>()
+    
+    <span class="cm"># 1. Vector Store (Chroma)</span>
+    vector_index = <span class="cl">VectorStoreIndex</span>.from_vector_store(storage.vector_store)
+    <span class="kw">for</span> c <span class="kw">in</span> chunks:
+        vector_index.insert(<span class="cl">TextNode</span>(id_=c[<span class="st">"id"</span>], text=c[<span class="st">"text"</span>], metadata=c[<span class="st">"metadata"</span>]))
+    
+    <span class="cm"># 2. Knowledge Graph Index extracts entity triplets</span>
+    graph_index = <span class="cl">KnowledgeGraphIndex</span>.from_documents(documents, storage_context=storage)
+    
+    <span class="cm"># 3. BM25 keyword index is persisted to a JSON file</span>
+    <span class="kw">with open</span>(GLOBAL_STORAGE_DIR / <span class="st">"bm25_index.json"</span>, <span class="st">"w"</span>) <span class="kw">as</span> f:
+        json.<span class="fn">dump</span>(all_chunks, f)</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-retrieval">
+    <section class="stage" style="--accent:var(--violet)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">04</div>
+          <div>
+            <h2 class="stage-title">Retrieval improves the question before searching.</h2>
+            <p class="stage-kicker">Users ask short, vague questions. The system uses HyDE, vector search, BM25 keyword search, graph lookup, reciprocal reranking, and LLM reranking to narrow many candidates into the best few contexts.</p>
+          </div>
+        </div>
+        <div class="pipeline">
+          <div class="pipe-step"><div class="n">Q</div><h4>User query</h4><p>The raw question may be ambiguous, incomplete, or use different vocabulary.</p></div>
+          <div class="pipe-step"><div class="n">H</div><h4>HyDE</h4><p>Generate a hypothetical answer-shaped document to search by meaning.</p></div>
+          <div class="pipe-step"><div class="n">V</div><h4>Vector</h4><p>Find semantically similar chunks even when words differ.</p></div>
+          <div class="pipe-step"><div class="n">B</div><h4>BM25</h4><p>Find exact names, identifiers, and keyword matches.</p></div>
+          <div class="pipe-step"><div class="n">G</div><h4>Graph</h4><p>Find relationship-based evidence when entities connect across hops.</p></div>
+          <div class="pipe-step"><div class="n">F</div><h4>Fusion</h4><p>Merge candidates so no single retrieval method dominates unfairly.</p></div>
+          <div class="pipe-step"><div class="n">R</div><h4>Rerank</h4><p>Select only the top context chunks for the answer writer.</p></div>
+        </div>
+        <div class="grid-3">
+          <div class="card accent"><h3>BM25</h3><p>Great for exact terms such as product names, error codes, file names, law names, and IDs.</p></div>
+          <div class="card accent"><h3>Vector search</h3><p>Great for meaning, paraphrases, concept matching, and questions that use different wording from the source.</p></div>
+          <div class="card accent"><h3>LLM rerank</h3><p>Great for final selection because it compares the question against candidate chunks directly.</p></div>
+        </div>
+        <p style="margin-top:32px; color:var(--ink-dim); font-size:16px;"><strong>Code Breakdown:</strong> The retriever is the heaviest lifter. It first expands the query using HyDE, then hits the Vector and BM25 indexes simultaneously. It merges those candidates using Reciprocal Rank Fusion, adds Graph hits, and finally runs a cross-encoder LLM to pick only the top 3 best chunks.</p>
+        <div class="code-container" style="margin-top:12px">
+          <div class="code-header">backend/rag_v2/retriever.py (Hybrid Fusion & Rerank)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">search_global_db</span>(query: <span class="cl">str</span>, top_k: <span class="cl">int</span> = <span class="st">3</span>) -> <span class="cl">dict</span>:
+    <span class="cm"># 1. Setup keyword (BM25) and semantic (Vector) search</span>
+    <span class="fn">print</span>(<span class="st">"  → Searching Vector and BM25 indexes..."</span>)
+    vector_retriever = vector_index.as_retriever(similarity_top_k=top_k * <span class="st">2</span>)
+    bm25_retriever = <span class="cl">BM25Retriever</span>.from_defaults(nodes=nodes, similarity_top_k=top_k * <span class="st">2</span>)
+    
+    <span class="cm"># 2. Fuse Vector + BM25 using Reciprocal Rank Fusion</span>
+    <span class="fn">print</span>(<span class="st">"  → Fusing Vector and BM25 results..."</span>)
+    fusion = <span class="cl">QueryFusionRetriever</span>([vector_retriever, bm25_retriever], mode=<span class="st">"reciprocal_rerank"</span>)
+    candidates = fusion.retrieve(<span class="cl">QueryBundle</span>(query_str=query))
+    
+    <span class="cm"># 3. LLM Reranking of final candidates</span>
+    <span class="fn">print</span>(<span class="st">"  → LLM reranking top candidates to find the best chunks..."</span>)
+    reranker = <span class="cl">LLMRerank</span>(llm=<span class="fn">get_llama_llm</span>(), choice_batch_size=<span class="st">5</span>, top_n=top_k)
+    best_nodes = reranker.postprocess_nodes(candidates, query_bundle)
+    
+    <span class="kw">return</span> {<span class="st">"query"</span>: query, <span class="st">"results"</span>: [{<span class="st">"text"</span>: n.node.text} <span class="kw">for</span> n <span class="kw">in</span> best_nodes]}</code></pre>
+        </div>
+        <div class="card accent" style="margin-top:24px">
+          <h3>Citations complete the trust loop</h3>
+          <p>Retrieval is not only about feeding the model. It also gives users and evaluators a way to inspect where the answer came from. Citations make the answer auditable.</p>
+        </div>
+        <div class="card accent" style="margin-top:24px">
+          <h3>Ragas-style evaluation</h3>
+          <p>After retrieval and answer generation, the system can score whether the answer is faithful to the retrieved context, whether the context was relevant, and whether the answer is supported by evidence. This turns RAG quality into a measurable report instead of a feeling.</p>
+        </div>
+        <p style="margin-top:32px; color:var(--ink-dim); font-size:16px;"><strong>Code Breakdown:</strong> The evaluator uses Ragas to act as an impartial judge. It spins up 4 independent LLM evaluations to test the answer against the retrieved context. If Faithfulness drops, the LLM hallucinated. If Context Precision drops, the retriever surfaced bad chunks.</p>
+        <div class="code-container" style="margin-top:12px">
+          <div class="code-header">backend/rag_v2/ragas_evaluation.py (Ragas Metrics)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">evaluate_ragas</span>(question: <span class="cl">str</span>, answer: <span class="cl">str</span>, contexts: <span class="cl">list</span>[<span class="cl">str</span>]) -> <span class="cl">dict</span>:
+    <span class="fn">print</span>(<span class="st">"\n=== Starting Ragas Evaluation ==="</span>)
+    dataset = <span class="cl">Dataset</span>.from_dict({
+        <span class="st">"question"</span>: [question],
+        <span class="st">"answer"</span>: [answer],
+        <span class="st">"contexts"</span>: [contexts],
+    })
+    
+    <span class="cm"># LLM-as-a-Judge computes these 4 independent scores</span>
+    metrics = [
+        faithfulness,
+        answer_relevancy,
+        context_precision,
+        context_recall
+    ]
+    
+    <span class="kw">return</span> <span class="fn">evaluate</span>(dataset, metrics=metrics, llm=<span class="fn">get_langchain_llm</span>())</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-summary">
+    <section class="stage" style="--accent:var(--amber)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">05</div>
+          <div>
+            <h2 class="stage-title">Vocabulary and final recap.</h2>
+            <p class="stage-kicker">These terms let students explain the RAG system like engineers instead of treating it as magic.</p>
+          </div>
+        </div>
+        <div class="vocab-grid">
+          <div class="term"><div class="word">RAG</div><p>Retrieval-Augmented Generation: answering with retrieved evidence instead of only model memory.</p></div>
+          <div class="term"><div class="word">Chunk</div><p>A retrievable piece of a document, sized to preserve meaning and fit context limits.</p></div>
+          <div class="term"><div class="word">Metadata</div><p>Extra information such as title, URL, category, and chunking strategy attached to each chunk.</p></div>
+          <div class="term"><div class="word">Embedding</div><p>A numerical representation of text meaning used for similarity search.</p></div>
+          <div class="term"><div class="word">Vector DB</div><p>A database optimized for finding nearby embeddings.</p></div>
+          <div class="term"><div class="word">Graph DB</div><p>A database optimized for entities, relationships, and multi-hop reasoning.</p></div>
+          <div class="term"><div class="word">BM25</div><p>A keyword ranking method that rewards exact term matches and useful word frequency.</p></div>
+          <div class="term"><div class="word">HyDE</div><p>A query transform that creates a hypothetical answer document to improve semantic retrieval.</p></div>
+          <div class="term"><div class="word">Reranking</div><p>Scoring candidate chunks again so only the most relevant context reaches the final answer.</p></div>
+          <div class="term"><div class="word">Ragas</div><p>A family of RAG evaluation ideas for scoring faithfulness, context relevance, and answer quality.</p></div>
+        </div>
+        <div class="summary-band" style="margin-top:32px">
+          <h3>Final summary</h3>
+          <ul>
+            <li>RAG turns messy knowledge into searchable evidence for an LLM.</li>
+            <li>Classification matters because HTML, Markdown, transcripts, logs, and reports need different chunking strategies.</li>
+            <li>Vector search finds meaning; BM25 finds exact terms; graph retrieval finds relationships.</li>
+            <li>HyDE and query transformation help when the user's question is vague or uses different language from the source.</li>
+            <li>Reranking, citations, and Ragas-style scorecards make the final answer more relevant, cheaper, and easier to audit.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tab = button.dataset.tab;
+      buttons.forEach(btn => btn.classList.remove('active'));
+      panels.forEach(panel => panel.classList.remove('active'));
+      button.classList.add('active');
+      document.getElementById(`panel-${tab}`).classList.add('active');
+      window.scrollTo({top: document.querySelector('.tabs').offsetTop, behavior: 'smooth'});
+    });
+  });
+});
+</script>
+</body>
+</html>

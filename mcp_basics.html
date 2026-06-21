@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP · A Visual Lesson · Tools · Servers · Clients · Notion &amp; Gmail · LangGraph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg: #0a0a14;
+  --bg-2: #11111f;
+  --ink: #f4f1ea;
+  --ink-dim: #a8a3b8;
+  --ink-faint: #5a5670;
+
+  /* Concept colors */
+  --c-local:  #14b8a6;   /* teal — local tools */
+  --c-mcp:    #a78bfa;   /* violet — mcp */
+  --c-server: #fb923c;   /* orange — servers */
+  --c-client: #f472b6;   /* pink — client */
+  --c-remote: #facc15;   /* yellow — remote / cloud */
+  --c-good:   #34d399;   /* green — good / result */
+
+  /* Gradient stops (stage colors, top → bottom) */
+  --s1:  #4338ca;
+  --s2:  #6d28d9;
+  --s3:  #9333ea;
+  --s4:  #c026d3;
+  --s5:  #db2777;
+  --s6:  #e11d48;
+  --s7:  #ea580c;
+  --s8:  #f59e0b;
+
+  --code-accent: #10b981;
+  --code-bg: #07121a;
+  --code-border: rgba(16,185,129,0.25);
+
+  --pos: #ef4444;
+  --neg: #3b82f6;
+
+  --card-bg: rgba(255,255,255,0.03);
+  --card-border: rgba(255,255,255,0.08);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family: 'Inter Tight', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  overflow-x: hidden;
+  background-image:
+    radial-gradient(ellipse at top, rgba(67,56,202,0.18), transparent 50%),
+    radial-gradient(ellipse at bottom, rgba(234,88,12,0.10), transparent 50%);
+  background-attachment: fixed;
+}
+.container{
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 2;
+}
+
+/* === Typography === */
+.display{ font-family:'Fraunces',serif; font-weight:900; letter-spacing:-0.04em; line-height:0.95; }
+.serif{ font-family:'Fraunces',serif; }
+.mono{ font-family:'JetBrains Mono',monospace; }
+.label{ font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:0.18em; font-size:11px; color:var(--ink-dim); }
+
+/* === Hero === */
+.hero{ min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:80px 0 60px; position:relative; }
+.hero .stage-num{ font-family:'Fraunces',serif; font-style:italic; font-weight:300; font-size:14px; color:var(--ink-faint); margin-bottom:24px; }
+.hero h1{
+  font-size: clamp(44px, 8.5vw, 116px);
+  margin-bottom:32px;
+  background: linear-gradient(135deg, var(--s1) 0%, var(--s4) 50%, var(--s7) 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+.hero h1 em{ font-style:italic; font-weight:300; background:none; -webkit-text-fill-color:var(--ink); color:var(--ink); }
+.hero .sub{ font-size:clamp(18px,2.2vw,24px); max-width:760px; color:var(--ink-dim); margin-bottom:56px; font-weight:300; }
+.stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; max-width:980px; }
+.stat{ border-left:2px solid var(--card-border); padding-left:16px; }
+.stat .num{ font-family:'Fraunces',serif; font-weight:800; font-size:34px; letter-spacing:-0.03em; color:var(--ink); }
+.stat .label{ margin-top:4px; }
+.scroll-hint{ position:absolute; bottom:40px; left:50%; transform:translateX(-50%); font-size:11px; letter-spacing:0.3em; text-transform:uppercase; color:var(--ink-faint); animation:bob 2s ease-in-out infinite; }
+@keyframes bob{ 0%,100%{transform:translate(-50%,0);} 50%{transform:translate(-50%,8px);} }
+
+/* === Stage Wrapper === */
+.stage{ padding:100px 0; position:relative; border-top:1px solid var(--card-border); }
+.stage-header{ display:grid; grid-template-columns:80px 1fr; gap:24px; margin-bottom:56px; align-items:start; }
+.stage-num-big{ font-family:'Fraunces',serif; font-style:italic; font-weight:300; font-size:64px; line-height:1; background:var(--stage-color,var(--s1)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.stage-title{ font-family:'Fraunces',serif; font-weight:800; font-size:clamp(30px,5vw,52px); letter-spacing:-0.03em; line-height:1.05; margin-bottom:12px; }
+.stage-title em{ font-style:italic; font-weight:300; }
+.stage-kicker{ font-size:17px; color:var(--ink-dim); font-weight:300; max-width:820px; }
+.stage-kicker code{ font-family:'JetBrains Mono',monospace; font-size:14px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:3px; color:var(--ink); }
+
+/* === Prose === */
+.prose{ max-width:840px; font-size:17px; color:var(--ink-dim); line-height:1.75; }
+.prose p{ margin-bottom:18px; }
+.prose strong, .prose b{ color:var(--ink); font-weight:600; }
+.prose code{ font-family:'JetBrains Mono',monospace; font-size:14px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:3px; color:#6ee7b7; }
+.prose .big{ font-size:19px; color:var(--ink); }
+.lead{ font-family:'Fraunces',serif; font-size:clamp(20px,2.6vw,26px); font-weight:300; line-height:1.45; color:var(--ink); max-width:840px; margin-bottom:32px; }
+.lead em{ font-style:italic; }
+
+/* === Card === */
+.card{ background:var(--card-bg); border:1px solid var(--card-border); border-radius:6px; padding:32px; position:relative; backdrop-filter:blur(10px); }
+.card.accent{ border-left:3px solid var(--stage-color,var(--s1)); }
+.card + .card{ margin-top:24px; }
+
+/* === Analogy callout === */
+.analogy{ margin:28px 0; padding:22px 26px; background:linear-gradient(90deg, rgba(167,139,250,0.10), rgba(167,139,250,0.02)); border-left:3px solid var(--c-mcp); border-radius:0 6px 6px 0; }
+.analogy .tag{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:var(--c-mcp); margin-bottom:8px; }
+.analogy p{ font-family:'Fraunces',serif; font-size:19px; font-weight:300; line-height:1.5; color:var(--ink); margin:0; }
+.analogy em{ font-style:italic; }
+
+/* === Code reveal === */
+.code-toggle{ margin-top:24px; display:inline-flex; align-items:center; gap:10px; padding:10px 18px; background:rgba(16,185,129,0.08); border:1px solid var(--code-border); color:var(--code-accent); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; border-radius:4px; cursor:pointer; transition:all 0.15s ease; font-weight:600; }
+.code-toggle:hover{ background:rgba(16,185,129,0.15); border-color:var(--code-accent); }
+.code-toggle .icon{ font-family:'JetBrains Mono',monospace; font-size:14px; }
+.code-panel{ margin-top:16px; background:var(--code-bg); border:1px solid var(--code-border); border-radius:6px; overflow:hidden; display:none; position:relative; }
+.code-panel.open{ display:block; animation:slideDown 0.3s ease; }
+@keyframes slideDown{ from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
+.code-panel-header{ padding:10px 18px; background:rgba(16,185,129,0.05); border-bottom:1px solid var(--code-border); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.15em; text-transform:uppercase; color:var(--code-accent); display:flex; justify-content:space-between; align-items:center; }
+.code-panel-header .filename::before{ content:'◉'; margin-right:8px; color:var(--code-accent); }
+.code-block{ padding:24px; font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1.8; overflow-x:auto; }
+.code-block .line{ display:block; min-height:1.8em; }
+.code-block .ind{ color:var(--ink-faint); }
+.code-block .kw{ color:#c084fc; font-weight:500; }
+.code-block .fn{ color:#fbbf24; }
+.code-block .str{ color:#6ee7b7; }
+.code-block .num{ color:#fde047; }
+.code-block .var{ color:#f4f1ea; }
+.code-block .cm{ color:#6b7280; font-style:italic; }
+.code-block .op{ color:#9ca3af; }
+
+/* === Annotation notes === */
+.notes{ display:flex; flex-direction:column; gap:14px; margin-top:8px; }
+.note{ font-size:13.5px; line-height:1.65; color:var(--ink-dim); padding:12px 16px; background:rgba(255,255,255,0.02); border-left:2px solid; border-radius:0 3px 3px 0; }
+.note .key{ font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--ink); display:block; margin-bottom:4px; letter-spacing:0.05em; }
+.note.r{ border-color:var(--c-local); } .note.r .key{ color:var(--c-local); }
+.note.a{ border-color:var(--c-mcp); } .note.a .key{ color:#c4b5fd; }
+.note.t{ border-color:var(--s8); } .note.t .key{ color:#fde047; }
+.note.g{ border-color:var(--c-remote); } .note.g .key{ color:var(--c-remote); }
+.note.p{ border-color:var(--c-client); } .note.p .key{ color:var(--c-client); }
+
+/* === Legend === */
+.legend{ display:flex; gap:16px; flex-wrap:wrap; padding:16px 24px; background:rgba(255,255,255,0.02); border:1px solid var(--card-border); border-radius:4px; margin-bottom:32px; font-family:'JetBrains Mono',monospace; font-size:12px; }
+.legend-item{ display:flex; gap:8px; align-items:center; }
+.legend-dot{ width:10px; height:10px; border-radius:2px; }
+
+/* === Generic cols === */
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:stretch; margin-top:8px; }
+.three-col{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:8px; }
+
+/* === Compare panels (vs) === */
+.vs-grid{ display:grid; grid-template-columns:1fr 60px 1fr; gap:0; align-items:center; margin-top:8px; }
+.vs-panel{ padding:28px; border-radius:8px; border:2px solid; height:100%; }
+.vs-panel h4{ font-family:'Fraunces',serif; font-weight:800; font-size:22px; margin-bottom:6px; }
+.vs-panel .vsub{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:16px; }
+.vs-panel ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.vs-panel li{ font-size:14px; color:var(--ink-dim); line-height:1.55; padding-left:20px; position:relative; }
+.vs-panel li::before{ content:'›'; position:absolute; left:0; font-weight:700; }
+.vs-mid{ text-align:center; font-family:'Fraunces',serif; font-style:italic; font-size:24px; color:var(--ink-faint); }
+.vs-panel.bad{ background:rgba(239,68,68,0.06); border-color:rgba(239,68,68,0.35); }
+.vs-panel.bad h4{ color:#fca5a5; } .vs-panel.bad li::before{ color:#fca5a5; }
+.vs-panel.good{ background:rgba(52,211,153,0.06); border-color:rgba(52,211,153,0.35); }
+.vs-panel.good h4{ color:var(--c-good); } .vs-panel.good li::before{ color:var(--c-good); }
+.vs-panel.local{ background:rgba(20,184,166,0.06); border-color:rgba(20,184,166,0.35); }
+.vs-panel.local h4{ color:var(--c-local); } .vs-panel.local li::before{ color:var(--c-local); }
+.vs-panel.remote{ background:rgba(250,204,21,0.06); border-color:rgba(250,204,21,0.35); }
+.vs-panel.remote h4{ color:var(--c-remote); } .vs-panel.remote li::before{ color:var(--c-remote); }
+
+/* === Decision table === */
+.dtable{ width:100%; border-collapse:separate; border-spacing:0; font-size:14px; margin-top:8px; }
+.dtable th{ text-align:left; padding:14px 16px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-dim); border-bottom:1px solid var(--card-border); }
+.dtable td{ padding:14px 16px; border-bottom:1px solid var(--card-border); color:var(--ink-dim); line-height:1.5; vertical-align:top; }
+.dtable td.k{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink); font-weight:600; white-space:nowrap; }
+.dtable td b{ color:var(--ink); }
+.dtable tr:last-child td{ border-bottom:none; }
+
+/* === Pipeline flow === */
+.flow-svg{ width:100%; height:auto; }
+
+/* === Step chips === */
+.steps{ display:flex; flex-direction:column; gap:0; margin-top:8px; }
+.step{ display:grid; grid-template-columns:48px 1fr; gap:20px; padding:20px 0; border-bottom:1px solid var(--card-border); align-items:start; }
+.step:last-child{ border-bottom:none; }
+.step-n{ font-family:'Fraunces',serif; font-weight:800; font-size:28px; color:var(--stage-color,var(--s1)); line-height:1; }
+.step-body h4{ font-family:'Fraunces',serif; font-weight:700; font-size:19px; margin-bottom:6px; }
+.step-body p{ font-size:14.5px; color:var(--ink-dim); line-height:1.65; }
+.step-body code{ font-family:'JetBrains Mono',monospace; font-size:13px; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:3px; color:#6ee7b7; }
+
+/* === Primitive cards === */
+.prim-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:8px; }
+.prim{ padding:24px; background:rgba(255,255,255,0.03); border:1px solid var(--card-border); border-radius:6px; border-top:3px solid; }
+.prim .pname{ font-family:'Fraunces',serif; font-weight:800; font-size:22px; margin-bottom:4px; }
+.prim .pwho{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:12px; }
+.prim .pdesc{ font-size:14px; color:var(--ink-dim); line-height:1.65; }
+.prim.tools{ border-top-color:var(--c-good); } .prim.tools .pname{ color:var(--c-good); } .prim.tools .pwho{ color:var(--c-good); }
+.prim.res{ border-top-color:var(--c-server); } .prim.res .pname{ color:var(--c-server); } .prim.res .pwho{ color:var(--c-server); }
+.prim.prompts{ border-top-color:var(--c-client); } .prim.prompts .pname{ color:var(--c-client); } .prim.prompts .pwho{ color:var(--c-client); }
+
+/* === Pill row === */
+.pills{ display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.pill{ font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 14px; border-radius:20px; border:1px solid; }
+.pill.l{ background:rgba(20,184,166,0.1); border-color:rgba(20,184,166,0.4); color:#5eead4; }
+.pill.s{ background:rgba(251,146,60,0.1); border-color:rgba(251,146,60,0.4); color:#fdba74; }
+.pill.r{ background:rgba(250,204,21,0.1); border-color:rgba(250,204,21,0.4); color:#fde047; }
+
+/* === Key takeaways === */
+.kt-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; }
+.kt-card{ padding:28px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:6px; border-top:3px solid; }
+.kt-n{ font-family:'Fraunces',serif; font-size:44px; font-weight:800; line-height:1; margin-bottom:16px; }
+.kt-h{ font-family:'Fraunces',serif; font-size:21px; font-weight:700; margin-bottom:12px; }
+.kt-d{ font-size:14px; color:var(--ink-dim); line-height:1.7; }
+
+/* === Footer === */
+.footer{ padding:80px 0 60px; text-align:center; border-top:1px solid var(--card-border); margin-top:80px; }
+.footer .quote{ font-family:'Fraunces',serif; font-style:italic; font-weight:300; font-size:clamp(20px,3vw,30px); max-width:780px; margin:0 auto 32px; line-height:1.4; color:var(--ink-dim); }
+.footer .sig{ font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.3em; text-transform:uppercase; color:var(--ink-faint); }
+
+/* === Responsive === */
+@media (max-width:900px){
+  .stage-header{ grid-template-columns:1fr; }
+  .stage-num-big{ font-size:48px; }
+  .stats{ grid-template-columns:repeat(2,1fr); }
+  .two-col, .three-col, .prim-grid{ grid-template-columns:1fr; }
+  .vs-grid{ grid-template-columns:1fr; gap:16px; }
+  .vs-mid{ padding:8px 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="container">
+    <div class="stage-num">A visual lesson · Model Context Protocol · Built for BIA students</div>
+    <h1 class="display">Teaching a model<br><em>to use tools.</em></h1>
+    <p class="sub">A language model can only write text. It can't search the web, read your Notion, or send an email. Tools give it hands. MCP is the standard plug that lets <em>any</em> model use <em>anyone's</em> tools — without rewriting glue code every single time.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="num">1</div><div class="label">Standard, many tools</div></div>
+      <div class="stat"><div class="num">3</div><div class="label">Server roles to learn</div></div>
+      <div class="stat"><div class="num">2</div><div class="label">Transports: stdio &amp; HTTP</div></div>
+      <div class="stat"><div class="num">∞</div><div class="label">Tools you can plug in</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">scroll to begin ↓</div>
+</section>
+
+<!-- ===== LEGEND ===== -->
+<section class="container" style="padding:32px 32px 0;">
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:var(--c-local)"></span><span><b style="color:var(--c-local)">Local tool</b> = your own function</span></div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--c-mcp)"></span><span><b style="color:#c4b5fd">MCP</b> = the standard plug</span></div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--c-server)"></span><span><b style="color:var(--c-server)">Server</b> = holds tools</span></div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--c-client)"></span><span><b style="color:var(--c-client)">Client</b> = the waiter</span></div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--code-accent)"></span><span><b style="color:var(--code-accent)">Code blocks</b> open on click</span></div>
+  </div>
+</section>
+
+<!-- ===== STAGE 1: THE PROBLEM ===== -->
+<section class="stage" style="--stage-color: var(--s1)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big">01</div>
+      <div>
+        <h2 class="stage-title">A model can <em>only talk</em>. It can't <em>do</em>.</h2>
+        <p class="stage-kicker">By itself, a language model is just a very good text writer. Ask it "what's the weather right now?" or "read my Notion page" and it is stuck. It has no hands. It can't reach out into the world.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p class="lead">A raw model is a brilliant brain locked in a room with no doors.</p>
+      <p>It can reason, write, and explain. But it <strong>cannot</strong> look up today's news, open a file on your computer, search the web, or send a message. All of those need an <strong>action in the real world</strong> — and a model only produces words.</p>
+      <p>So we give it <strong>tools</strong>. A tool is just a small action the model is allowed to ask for: "search this," "read that file," "send this email." The model says <i>which</i> tool it wants and <i>what</i> to pass in. Something else runs it and hands back the answer.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="tag">The core idea</div>
+      <p>The model is a <em>smart manager</em> who can't leave the desk. Tools are the <em>staff</em> who go out, do the task, and bring back the result. The manager decides; the staff act.</p>
+    </div>
+
+    <!-- DIAGRAM: brain vs brain+tools -->
+    <div class="card" style="margin-top:32px">
+      <svg viewBox="0 0 900 240" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <!-- left: brain alone -->
+        <text x="200" y="34" fill="#a8a3b8" font-size="13" text-anchor="middle" font-family="JetBrains Mono,monospace" letter-spacing="2">MODEL ALONE</text>
+        <circle cx="200" cy="130" r="58" fill="rgba(67,56,202,0.15)" stroke="rgba(99,102,241,0.5)" stroke-width="2"/>
+        <text x="200" y="125" font-size="30" text-anchor="middle">🧠</text>
+        <text x="200" y="158" fill="#c7d2fe" font-size="13" text-anchor="middle">words only</text>
+        <text x="200" y="218" fill="#fca5a5" font-size="13" text-anchor="middle">✕ can't search · ✕ can't read files · ✕ can't act</text>
+
+        <!-- divider -->
+        <line x1="450" y1="40" x2="450" y2="210" stroke="rgba(255,255,255,0.1)" stroke-dasharray="4 4"/>
+
+        <!-- right: brain + tools -->
+        <text x="690" y="34" fill="#a8a3b8" font-size="13" text-anchor="middle" font-family="JetBrains Mono,monospace" letter-spacing="2">MODEL + TOOLS</text>
+        <circle cx="600" cy="130" r="48" fill="rgba(67,56,202,0.15)" stroke="rgba(99,102,241,0.5)" stroke-width="2"/>
+        <text x="600" y="138" font-size="26" text-anchor="middle">🧠</text>
+        <!-- tool nodes -->
+        <g font-size="12" text-anchor="middle">
+          <rect x="730" y="58" width="120" height="34" rx="6" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.45)"/><text x="790" y="80" fill="#5eead4">🔍 search</text>
+          <rect x="730" y="112" width="120" height="34" rx="6" fill="rgba(251,146,60,0.12)" stroke="rgba(251,146,60,0.45)"/><text x="790" y="134" fill="#fdba74">📄 read file</text>
+          <rect x="730" y="166" width="120" height="34" rx="6" fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.45)"/><text x="790" y="188" fill="#6ee7b7">✉️ send mail</text>
+        </g>
+        <g stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a1)">
+          <path d="M648 110 L730 78"/><path d="M648 130 L730 129"/><path d="M648 150 L730 180"/>
+        </g>
+        <defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker></defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 2: LOCAL TOOLS ===== -->
+<section class="stage" style="--stage-color: var(--c-local)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-local);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">02</div>
+      <div>
+        <h2 class="stage-title">Start simple: a <em>local tool</em>.</h2>
+        <p class="stage-kicker">The easiest tool is just a Python function you write yourself. In LangGraph, you stick <code>@tool</code> on top of a function and it becomes something the model can call. Nothing fancy — it lives in your own code, on your own machine.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>Let's say we're building a <strong>research agent</strong>. It has four helpers working together: a <strong>planner</strong> (decides the steps), a <strong>searcher</strong> (finds info), a <strong>writer</strong> (drafts the answer), and a <strong>critic</strong> (checks the work).</p>
+      <p>The <strong>searcher</strong> needs two tools to do its job: a way to <strong>search the web</strong> (DuckDuckGo) and a way to <strong>look inside our own documents</strong> (a RAG retriever). Both start life as plain local functions.</p>
+    </div>
+
+    <!-- research agent diagram -->
+    <div class="card" style="margin-top:8px">
+      <svg viewBox="0 0 900 200" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <g font-size="13" text-anchor="middle">
+          <rect x="40"  y="80" width="130" height="44" rx="8" fill="rgba(99,102,241,0.12)" stroke="rgba(99,102,241,0.5)"/><text x="105" y="107" fill="#c7d2fe">🧭 Planner</text>
+          <rect x="230" y="80" width="130" height="44" rx="8" fill="rgba(20,184,166,0.14)" stroke="rgba(20,184,166,0.55)"/><text x="295" y="107" fill="#5eead4">🔍 Searcher</text>
+          <rect x="420" y="80" width="130" height="44" rx="8" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.5)"/><text x="485" y="107" fill="#c4b5fd">✍️ Writer</text>
+          <rect x="610" y="80" width="130" height="44" rx="8" fill="rgba(244,114,182,0.12)" stroke="rgba(244,114,182,0.5)"/><text x="675" y="107" fill="#f9a8d4">🔎 Critic</text>
+        </g>
+        <g stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a2)">
+          <path d="M170 102 L230 102"/><path d="M360 102 L420 102"/><path d="M550 102 L610 102"/>
+        </g>
+        <!-- searcher's tools -->
+        <g font-size="11" text-anchor="middle">
+          <rect x="200" y="150" width="90" height="32" rx="6" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.4)"/><text x="245" y="170" fill="#5eead4">DuckDuckGo</text>
+          <rect x="300" y="150" width="90" height="32" rx="6" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.4)"/><text x="345" y="170" fill="#5eead4">RAG retriever</text>
+        </g>
+        <g stroke="rgba(20,184,166,0.5)" stroke-width="1.3" stroke-dasharray="3 3">
+          <path d="M270 124 L255 150"/><path d="M320 124 L335 150"/>
+        </g>
+        <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker></defs>
+      </svg>
+    </div>
+
+    <button class="code-toggle" onclick="toggleCode('c-local')"><span class="icon">&lt;/&gt;</span> Show a local tool</button>
+    <div class="code-panel" id="c-local">
+      <div class="code-panel-header"><span class="filename">tools.py</span><span>LangGraph · @tool</span></div>
+      <div class="code-block">
+<span class="line"><span class="kw">from</span> <span class="var">langchain_core.tools</span> <span class="kw">import</span> <span class="var">tool</span></span>
+<span class="line"></span>
+<span class="line"><span class="op">@</span><span class="fn">tool</span></span>
+<span class="line"><span class="kw">def</span> <span class="fn">search_web</span>(<span class="var">query</span>: <span class="var">str</span>) <span class="op">-></span> <span class="var">str</span>:</span>
+<span class="line"><span class="ind">    </span><span class="str">"""Search the web for a query and return the top results."""</span></span>
+<span class="line"><span class="ind">    </span><span class="kw">return</span> <span class="fn">duckduckgo</span>(<span class="var">query</span>)   <span class="cm"># your own code</span></span>
+<span class="line"></span>
+<span class="line"><span class="op">@</span><span class="fn">tool</span></span>
+<span class="line"><span class="kw">def</span> <span class="fn">retrieve_docs</span>(<span class="var">query</span>: <span class="var">str</span>) <span class="op">-></span> <span class="var">str</span>:</span>
+<span class="line"><span class="ind">    </span><span class="str">"""Find passages from our own documents (RAG)."""</span></span>
+<span class="line"><span class="ind">    </span><span class="kw">return</span> <span class="var">vector_store</span>.<span class="fn">similarity_search</span>(<span class="var">query</span>)</span>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note r"><span class="key">THE DOCSTRING IS NOT DECORATION</span>That line in triple-quotes <i>is</i> the tool's description. The model reads it to decide when to use the tool. A vague docstring = the model never picks it. Write it like you're explaining to a new intern.</div>
+      <div class="note r"><span class="key">WHERE IT LIVES</span>This function runs inside your own program, on your own machine. That's why we call it a <b>local tool</b>. No network, no server, no setup. Perfect to start with.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 3: THE TOOL LIST ===== -->
+<section class="stage" style="--stage-color: var(--c-local)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-local);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">03</div>
+      <div>
+        <h2 class="stage-title">The model only knows the tools <em>you hand it</em>.</h2>
+        <p class="stage-kicker">This trips everyone up, so say it plainly: the model does <strong>not</strong> magically discover your tools. You collect them into a list and pass that list into the model. It can only pick from what's in front of it.</p>
+      </div>
+    </div>
+
+    <!-- flow: tools -> list -> model -> picks -->
+    <div class="card">
+      <svg viewBox="0 0 900 230" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <g font-size="12" text-anchor="middle">
+          <rect x="30"  y="40" width="150" height="34" rx="6" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.4)"/><text x="105" y="62" fill="#5eead4">search_web</text>
+          <rect x="30"  y="98" width="150" height="34" rx="6" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.4)"/><text x="105" y="120" fill="#5eead4">retrieve_docs</text>
+          <rect x="30"  y="156" width="150" height="34" rx="6" fill="rgba(20,184,166,0.1)" stroke="rgba(20,184,166,0.4)"/><text x="105" y="178" fill="#5eead4">calculator</text>
+        </g>
+        <!-- bundle -->
+        <g stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a3)">
+          <path d="M180 57 L300 110"/><path d="M180 115 L300 115"/><path d="M180 173 L300 120"/>
+        </g>
+        <rect x="300" y="92" width="150" height="46" rx="8" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.5)"/>
+        <text x="375" y="112" fill="#c4b5fd" font-size="13" text-anchor="middle">tool LIST</text>
+        <text x="375" y="129" fill="#a8a3b8" font-size="11" text-anchor="middle">you build this</text>
+        <!-- to model -->
+        <path d="M450 115 L560 115" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a3)"/>
+        <circle cx="620" cy="115" r="48" fill="rgba(67,56,202,0.15)" stroke="rgba(99,102,241,0.5)" stroke-width="2"/>
+        <text x="620" y="123" font-size="26" text-anchor="middle">🧠</text>
+        <!-- picks -->
+        <path d="M668 115 L760 115" stroke="rgba(52,211,153,0.5)" stroke-width="1.8" marker-end="url(#a3g)"/>
+        <rect x="760" y="96" width="120" height="40" rx="8" fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.5)"/>
+        <text x="820" y="113" fill="#6ee7b7" font-size="12" text-anchor="middle">picks one</text>
+        <text x="820" y="129" fill="#a8a3b8" font-size="10" text-anchor="middle">+ fills args</text>
+        <defs>
+          <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker>
+          <marker id="a3g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,0.6)"/></marker>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="prose" style="margin-top:24px">
+      <p>So the job splits in two. <strong>You</strong> gather the tools and give them to the model once. The <strong>model</strong>, every turn, reads the names and descriptions, picks the right tool, and fills in the arguments (like <code>{"query": "AI news"}</code>). You never hardcode which tool gets called — the model decides.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 4: THE PAIN ===== -->
+<section class="stage" style="--stage-color: var(--s6)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--s6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">04</div>
+      <div>
+        <h2 class="stage-title">Now the real problem. <em>How do I share my tool?</em></h2>
+        <p class="stage-kicker">My RAG retriever is great. I want my whole team — and their agents — to use it too. But a local function only works inside <i>my</i> code. The moment someone else wants it, the pain begins.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>Think about what it takes to use <i>any</i> outside service today. Every company's API is different. Different login. Different web address. And worst of all — every one sends back a <strong>different shape of JSON</strong>.</p>
+    </div>
+
+    <!-- different json shapes -->
+    <div class="three-col" style="margin-top:8px">
+      <div class="card" style="border-top:3px solid var(--s7)">
+        <div class="label" style="color:#fdba74">Notion sends</div>
+        <pre class="mono" style="font-size:11px;color:#a8a3b8;line-height:1.7;margin-top:10px;overflow-x:auto">{
+  "results": [
+    {"properties":
+      {"title": [...] }}
+  ]
+}</pre>
+      </div>
+      <div class="card" style="border-top:3px solid var(--s5)">
+        <div class="label" style="color:#f9a8d4">Gmail sends</div>
+        <pre class="mono" style="font-size:11px;color:#a8a3b8;line-height:1.7;margin-top:10px;overflow-x:auto">{
+  "messages": [
+    {"id": "...",
+     "payload":
+       {"headers":[...]}}
+  ]
+}</pre>
+      </div>
+      <div class="card" style="border-top:3px solid var(--neg)">
+        <div class="label" style="color:#93c5fd">Slack sends</div>
+        <pre class="mono" style="font-size:11px;color:#a8a3b8;line-height:1.7;margin-top:10px;overflow-x:auto">{
+  "ok": true,
+  "messages": [
+    {"text": "...",
+     "ts": "..."}
+  ]
+}</pre>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top:28px">
+      <p>So for <strong>every</strong> service you must: read their docs, write login code, call the right address, then <strong>dig the useful text out of their odd JSON</strong> and re-shape it for the model. Then do it <i>all over again</i> for the next service. And the next. This glue code is boring, fragile, and never ends.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="tag">The frustration</div>
+      <p>It's like every wall socket in the world having a <em>different shape</em>. Every device needs its own custom plug, hand-made. You'd spend all your time making plugs and none of your time using the device.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 5: MCP ENTERS ===== -->
+<section class="stage" style="--stage-color: var(--c-mcp)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-mcp);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">05</div>
+      <div>
+        <h2 class="stage-title">MCP: <em>one standard plug</em> for every tool.</h2>
+        <p class="stage-kicker">MCP stands for <code>Model Context Protocol</code>. "Context" = the data and tools a model needs but doesn't carry inside itself. "Protocol" = one agreed set of rules everyone follows. Put together: <strong>a standard way to hand a model tools it doesn't already have.</strong></p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>The fix is simple and powerful. Instead of <i>you</i> writing glue for each service, the service author writes it <strong>once</strong> and wraps it in an <strong>MCP server</strong>. Now every server — Notion, Gmail, yours — speaks the <strong>same language</strong>. You plug in and get tools in one fixed shape. No more custom plugs.</p>
+    </div>
+
+    <!-- before/after sockets -->
+    <div class="vs-grid">
+      <div class="vs-panel bad">
+        <h4>Without MCP</h4>
+        <div class="vsub">write glue for every service</div>
+        <ul>
+          <li>Read every API's docs</li>
+          <li>Write separate login for each</li>
+          <li>Decode each one's messy JSON</li>
+          <li>Re-shape text for the model</li>
+          <li>Repeat forever, for every tool</li>
+        </ul>
+      </div>
+      <div class="vs-mid">→</div>
+      <div class="vs-panel good">
+        <h4>With MCP</h4>
+        <div class="vsub">plug in, get tools</div>
+        <ul>
+          <li>Author wrote the wrapper once</li>
+          <li>One standard way to connect</li>
+          <li>Tools arrive in one fixed shape</li>
+          <li>Model already understands it</li>
+          <li>You write zero glue</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="tag">The famous line</div>
+      <p>MCP is the <em>USB-C for AI</em>. One plug shape. Any device, any model, any tool — they all fit the same port.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 6: THE STANDARD REPLY ===== -->
+<section class="stage" style="--stage-color: var(--c-mcp)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-mcp);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">06</div>
+      <div>
+        <h2 class="stage-title">The one shape every reply follows.</h2>
+        <p class="stage-kicker">Here's the heart of "standard." No matter which server you call — calculator, Notion, Gmail — the answer always comes back wrapped the <strong>same way</strong>: a <code>content</code> list, holding text. The model knows how to read this every time.</p>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:3px solid var(--c-mcp)">
+      <div class="code-panel open" style="margin-top:0;display:block">
+        <div class="code-panel-header"><span class="filename">any tool reply</span><span>same for ALL servers</span></div>
+        <div class="code-block">
+<span class="line"><span class="str">"result"</span>: {</span>
+<span class="line"><span class="ind">  </span><span class="str">"content"</span>: [</span>
+<span class="line"><span class="ind">    </span>{ <span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: <span class="str">"Here is the answer..."</span> }</span>
+<span class="line"><span class="ind">  </span>],</span>
+<span class="line"><span class="ind">  </span><span class="str">"isError"</span>: <span class="kw">false</span></span>
+<span class="line">}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-top:24px">
+      <div class="card">
+        <div class="serif" style="font-size:19px;font-weight:700;margin-bottom:8px;color:#c4b5fd">content</div>
+        <p style="font-size:14px;color:var(--ink-dim);line-height:1.7">Always a <b style="color:var(--ink)">list</b>. The actual result lives inside it.</p>
+      </div>
+      <div class="card">
+        <div class="serif" style="font-size:19px;font-weight:700;margin-bottom:8px;color:#c4b5fd">type</div>
+        <p style="font-size:14px;color:var(--ink-dim);line-height:1.7">Usually <code style="color:#6ee7b7">"text"</code> — what the model needs. Can also be image, audio.</p>
+      </div>
+      <div class="card">
+        <div class="serif" style="font-size:19px;font-weight:700;margin-bottom:8px;color:#c4b5fd">isError</div>
+        <p style="font-size:14px;color:var(--ink-dim);line-height:1.7">Simple flag. <code style="color:#6ee7b7">true</code> if the tool failed. Otherwise the result is good.</p>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note a"><span class="key">WHY THIS IS THE WHOLE TRICK</span>The server author decodes the messy JSON <b>once</b> and packs the useful text into this box. So you — and a thousand other people — never have to. Decode once, reuse everywhere. That is the entire value of MCP in one picture.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 7: BUILD A SERVER ===== -->
+<section class="stage" style="--stage-color: var(--c-server)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-server);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">07</div>
+      <div>
+        <h2 class="stage-title">Build your own server — <em>it's tiny</em>.</h2>
+        <p class="stage-kicker">Remember our problem: we wanted to <i>share</i> the RAG retriever. The answer is to wrap it in an MCP server. With <strong>FastMCP</strong> (Python), this is almost no work. You write normal functions; the library turns them into MCP tools.</p>
+      </div>
+    </div>
+
+    <button class="code-toggle" onclick="toggleCode('c-server')"><span class="icon">&lt;/&gt;</span> Show the whole server</button>
+    <div class="code-panel" id="c-server">
+      <div class="code-panel-header"><span class="filename">calc_server.py</span><span>FastMCP · the entire file</span></div>
+      <div class="code-block">
+<span class="line"><span class="kw">from</span> <span class="var">fastmcp</span> <span class="kw">import</span> <span class="var">FastMCP</span></span>
+<span class="line"></span>
+<span class="line"><span class="var">mcp</span> <span class="op">=</span> <span class="fn">FastMCP</span>(<span class="str">"Calculator"</span>)</span>
+<span class="line"></span>
+<span class="line"><span class="op">@</span><span class="var">mcp</span>.<span class="fn">tool</span>()</span>
+<span class="line"><span class="kw">def</span> <span class="fn">add</span>(<span class="var">a</span>: <span class="var">float</span>, <span class="var">b</span>: <span class="var">float</span>) <span class="op">-></span> <span class="var">float</span>:</span>
+<span class="line"><span class="ind">    </span><span class="str">"""Add two numbers."""</span></span>
+<span class="line"><span class="ind">    </span><span class="kw">return</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span></span>
+<span class="line"></span>
+<span class="line"><span class="op">@</span><span class="var">mcp</span>.<span class="fn">tool</span>()</span>
+<span class="line"><span class="kw">def</span> <span class="fn">divide</span>(<span class="var">a</span>: <span class="var">float</span>, <span class="var">b</span>: <span class="var">float</span>) <span class="op">-></span> <span class="var">float</span>:</span>
+<span class="line"><span class="ind">    </span><span class="str">"""Divide a by b."""</span></span>
+<span class="line"><span class="ind">    </span><span class="kw">if</span> <span class="var">b</span> <span class="op">==</span> <span class="num">0</span>:</span>
+<span class="line"><span class="ind">        </span><span class="kw">return</span> <span class="str">"Error: cannot divide by zero"</span></span>
+<span class="line"><span class="ind">    </span><span class="kw">return</span> <span class="var">a</span> <span class="op">/</span> <span class="var">b</span></span>
+<span class="line"></span>
+<span class="line"><span class="kw">if</span> <span class="var">__name__</span> <span class="op">==</span> <span class="str">"__main__"</span>:</span>
+<span class="line"><span class="ind">    </span><span class="var">mcp</span>.<span class="fn">run</span>()</span>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-top:28px">
+      <div class="card accent" style="--stage-color:var(--c-server)">
+        <div class="label" style="color:var(--c-server)">@mcp.tool()</div>
+        <p style="font-size:14px;color:var(--ink-dim);line-height:1.7;margin-top:10px">One decorator turns a plain function into an MCP tool. That's the whole magic.</p>
+      </div>
+      <div class="card accent" style="--stage-color:var(--c-server)">
+        <div class="label" style="color:var(--c-server)">the docstring</div>
+        <p style="font-size:14px;color:var(--ink-dim);line-height:1.7;margin-top:10px">Becomes the tool's description — what the model reads to decide. Write it well.</p>
+      </div>
+      <div class="card accent" style="--stage-color:var(--c-server)">
+        <div class="label" style="color:var(--c-server)">just return</div>
+        <p style="font-size:14px;color:var(--ink-dim);line-height:1.7;margin-top:10px">You return a value. FastMCP wraps it into the <code style="color:#6ee7b7">content → text</code> shape for you, automatically.</p>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note t"><span class="key">RUN IT</span><span class="mono" style="color:#6ee7b7">pip install fastmcp</span> &nbsp;then&nbsp; <span class="mono" style="color:#6ee7b7">python calc_server.py</span>. Your retriever becomes a server the exact same way — wrap the function, done. Now anyone can plug into it.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 8: THE CLIENT ===== -->
+<section class="stage" style="--stage-color: var(--c-client)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-client);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">08</div>
+      <div>
+        <h2 class="stage-title">The <em>client</em> is just a waiter.</h2>
+        <p class="stage-kicker">The server holds the tools. The model decides what it wants. The <strong>client</strong> sits in the middle and carries messages back and forth. It decides nothing on its own — it just connects, fetches the tool list, and runs whatever the model chose.</p>
+      </div>
+    </div>
+
+    <!-- waiter analogy diagram -->
+    <div class="card">
+      <svg viewBox="0 0 900 220" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <g font-size="13" text-anchor="middle">
+          <rect x="40"  y="80" width="170" height="56" rx="10" fill="rgba(67,56,202,0.14)" stroke="rgba(99,102,241,0.5)"/>
+          <text x="125" y="104" fill="#c7d2fe">🧠 Model</text><text x="125" y="124" fill="#a8a3b8" font-size="11">"customer"</text>
+          <rect x="365" y="80" width="170" height="56" rx="10" fill="rgba(244,114,182,0.14)" stroke="rgba(244,114,182,0.5)"/>
+          <text x="450" y="104" fill="#f9a8d4">🤝 Client</text><text x="450" y="124" fill="#a8a3b8" font-size="11">"waiter"</text>
+          <rect x="690" y="80" width="170" height="56" rx="10" fill="rgba(251,146,60,0.14)" stroke="rgba(251,146,60,0.5)"/>
+          <text x="775" y="104" fill="#fdba74">🍳 Server</text><text x="775" y="124" fill="#a8a3b8" font-size="11">"kitchen"</text>
+        </g>
+        <!-- arrows with labels -->
+        <path d="M210 100 L365 100" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a9)"/>
+        <text x="287" y="92" fill="#a8a3b8" font-size="11" text-anchor="middle">"I want add(5,3)"</text>
+        <path d="M535 100 L690 100" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a9)"/>
+        <text x="612" y="92" fill="#a8a3b8" font-size="11" text-anchor="middle">runs the tool</text>
+        <path d="M690 122 L535 122" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#a9g)"/>
+        <text x="612" y="148" fill="#6ee7b7" font-size="11" text-anchor="middle">8</text>
+        <path d="M365 122 L210 122" stroke="rgba(52,211,153,0.5)" stroke-width="1.5" marker-end="url(#a9g)"/>
+        <text x="287" y="148" fill="#6ee7b7" font-size="11" text-anchor="middle">brings back 8</text>
+        <defs>
+          <marker id="a9" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker>
+          <marker id="a9g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,0.6)"/></marker>
+        </defs>
+      </svg>
+    </div>
+
+    <div class="steps" style="margin-top:16px">
+      <div class="step"><div class="step-n">1</div><div class="step-body"><h4>Connect</h4><p>The client opens a line to the server.</p></div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-body"><h4>List tools</h4><p>It asks "what can you do?" and gets the tool list back. <code>client.list_tools()</code></p></div></div>
+      <div class="step"><div class="step-n">3</div><div class="step-body"><h4>Hand tools to the model</h4><p>You pass that list into the LLM so it can choose.</p></div></div>
+      <div class="step"><div class="step-n">4</div><div class="step-body"><h4>Carry the call</h4><p>When the model picks a tool, the client runs it on the server and brings the answer back.</p></div></div>
+    </div>
+
+    <div class="analogy">
+      <div class="tag">Remember</div>
+      <p>Server = the <em>kitchen</em> (has the food). Client = the <em>waiter</em> (carries orders). Model = the <em>customer</em> (decides the order). The waiter never decides what you eat.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 9: ONE CLIENT MANY SERVERS ===== -->
+<section class="stage" style="--stage-color: var(--c-client)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-client);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">09</div>
+      <div>
+        <h2 class="stage-title">One client. <em>Many servers.</em></h2>
+        <p class="stage-kicker">A single client can connect to many servers at once. It collects <strong>all</strong> their tools into one big pool and hands the whole pool to the model. The model picks any tool from any server; the client quietly routes the call to the right one.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <svg viewBox="0 0 900 280" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <!-- client center -->
+        <rect x="370" y="118" width="160" height="56" rx="10" fill="rgba(244,114,182,0.14)" stroke="rgba(244,114,182,0.55)"/>
+        <text x="450" y="142" fill="#f9a8d4" font-size="14" text-anchor="middle">🤝 one Client</text>
+        <text x="450" y="161" fill="#a8a3b8" font-size="11" text-anchor="middle">tool pool</text>
+        <!-- servers -->
+        <g font-size="12" text-anchor="middle">
+          <rect x="40" y="30" width="150" height="38" rx="7" fill="rgba(251,146,60,0.12)" stroke="rgba(251,146,60,0.45)"/><text x="115" y="54" fill="#fdba74">calculator</text>
+          <rect x="40" y="92" width="150" height="38" rx="7" fill="rgba(251,146,60,0.12)" stroke="rgba(251,146,60,0.45)"/><text x="115" y="116" fill="#fdba74">RAG retriever</text>
+          <rect x="40" y="154" width="150" height="38" rx="7" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.45)"/><text x="115" y="178" fill="#fde047">Notion ☁</text>
+          <rect x="40" y="216" width="150" height="38" rx="7" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.45)"/><text x="115" y="240" fill="#fde047">Gmail ☁</text>
+        </g>
+        <g stroke="rgba(255,255,255,0.22)" stroke-width="1.4">
+          <path d="M190 49 C 300 49, 300 130, 370 134"/>
+          <path d="M190 111 C 300 111, 320 140, 370 142"/>
+          <path d="M190 173 C 300 173, 320 152, 370 150"/>
+          <path d="M190 235 C 300 235, 300 162, 370 158"/>
+        </g>
+        <!-- to model -->
+        <path d="M530 146 L640 146" stroke="rgba(255,255,255,0.25)" stroke-width="1.6" marker-end="url(#a10)"/>
+        <text x="585" y="138" fill="#a8a3b8" font-size="11" text-anchor="middle">all tools</text>
+        <circle cx="710" cy="146" r="48" fill="rgba(67,56,202,0.15)" stroke="rgba(99,102,241,0.5)" stroke-width="2"/>
+        <text x="710" y="154" font-size="26" text-anchor="middle">🧠</text>
+        <text x="710" y="214" fill="#c7d2fe" font-size="12" text-anchor="middle">picks from the pool</text>
+        <defs><marker id="a10" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker></defs>
+      </svg>
+    </div>
+
+    <button class="code-toggle" onclick="toggleCode('c-multi')"><span class="icon">&lt;/&gt;</span> Show the multi-server client</button>
+    <div class="code-panel" id="c-multi">
+      <div class="code-panel-header"><span class="filename">client.py</span><span>FastMCP · one client, many servers</span></div>
+      <div class="code-block">
+<span class="line"><span class="kw">from</span> <span class="var">fastmcp</span> <span class="kw">import</span> <span class="var">Client</span></span>
+<span class="line"></span>
+<span class="line"><span class="var">client</span> <span class="op">=</span> <span class="fn">Client</span>({</span>
+<span class="line"><span class="ind">  </span><span class="str">"calculator"</span>: {<span class="str">"command"</span>: <span class="str">"python"</span>, <span class="str">"args"</span>: [<span class="str">"calc_server.py"</span>]},</span>
+<span class="line"><span class="ind">  </span><span class="str">"notion"</span>:     {<span class="str">"url"</span>: <span class="str">"https://mcp.notion.com/mcp"</span>, <span class="str">"auth"</span>: <span class="str">"oauth"</span>},</span>
+<span class="line"><span class="ind">  </span><span class="str">"gmail"</span>:      {<span class="str">"url"</span>: <span class="str">"https://gmailmcp.googleapis.com/mcp/v1"</span>, <span class="str">"auth"</span>: <span class="str">"oauth"</span>},</span>
+<span class="line"><span class="ind">  </span><span class="str">"playwright"</span>: {<span class="str">"command"</span>: <span class="str">"npx"</span>, <span class="str">"args"</span>: [<span class="str">"-y"</span>, <span class="str">"@playwright/mcp"</span>]},</span>
+<span class="line">})</span>
+<span class="line"></span>
+<span class="line"><span class="kw">async with</span> <span class="var">client</span>:</span>
+<span class="line"><span class="ind">    </span><span class="var">tools</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">client</span>.<span class="fn">list_tools</span>()   <span class="cm"># all tools, one list</span></span>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note p"><span class="key">NAMES GET A PREFIX</span>To stop clashes, tools come back named by server: <span class="mono" style="color:#f9a8d4">calculator_add</span>, <span class="mono" style="color:#f9a8d4">notion_search</span>, <span class="mono" style="color:#f9a8d4">gmail_search_emails</span>. The model reads each name + description and picks.</div>
+      <div class="note p"><span class="key">WHATEVER THE SERVER PAGE GIVES YOU</span>When you find a server online, it shows a config block. You just drop that block <b>inside the client</b>. That's the whole setup.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 10: LOCAL VS REMOTE ===== -->
+<section class="stage" style="--stage-color: var(--c-remote)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-remote);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">10</div>
+      <div>
+        <h2 class="stage-title">Two kinds of server: <em>local</em> and <em>remote</em>.</h2>
+        <p class="stage-kicker">Some servers run on <strong>your machine</strong> (because they touch your machine). Some run in the <strong>cloud</strong> on the company's machine. The first you start yourself; the second you just connect to.</p>
+      </div>
+    </div>
+
+    <div class="vs-grid">
+      <div class="vs-panel local">
+        <h4>Local server · stdio</h4>
+        <div class="vsub">runs on your machine</div>
+        <ul>
+          <li>Touches local things: your files, your browser</li>
+          <li>Examples: Playwright, Filesystem, your calculator</li>
+          <li>The client <b>starts it</b> for you</li>
+          <li>Config uses <code style="color:#6ee7b7">command</code> + <code style="color:#6ee7b7">args</code></li>
+          <li>Talks over <b>stdio</b> (the default)</li>
+        </ul>
+      </div>
+      <div class="vs-mid">vs</div>
+      <div class="vs-panel remote">
+        <h4>Remote server · HTTP</h4>
+        <div class="vsub">runs in the cloud</div>
+        <ul>
+          <li>Lives on the company's servers</li>
+          <li>Examples: Notion, Gmail, GitHub</li>
+          <li>Already running — you just <b>connect</b></li>
+          <li>Config uses a <code style="color:#6ee7b7">url</code></li>
+          <li>Talks over <b>HTTP</b>, usually needs login</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <p style="font-size:15px;color:var(--ink-dim);line-height:1.8">Decoding the config: <code class="mono" style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:3px;color:#6ee7b7">{"command": "python", "args": ["calc_server.py"]}</code> simply means <b style="color:var(--ink)">"start this server by running <span class="mono">python calc_server.py</span>"</b> — the same line you'd type in your terminal. <code class="mono">python</code> is the program; <code class="mono">calc_server.py</code> is the file it runs. The client launches it as a background process and talks to it over stdio.</p>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note g"><span class="key">PLAYWRIGHT = THE PERFECT EXAMPLE</span>Playwright drives <i>your</i> browser — opens pages, clicks buttons. That can only happen on your machine, so it <b>must</b> be local. Cloud servers like Notion can't touch your browser, so they live remotely.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 11: AUTH ===== -->
+<section class="stage" style="--stage-color: var(--s5)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--s5);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">11</div>
+      <div>
+        <h2 class="stage-title">Logging in to Notion &amp; Gmail.</h2>
+        <p class="stage-kicker">Your calculator needs no login. But Notion and Gmail hold private data, so they ask <strong>"who are you?"</strong> first. This is <strong>OAuth</strong> — and the nice part is you never paste a secret token by hand.</p>
+      </div>
+    </div>
+
+    <!-- oauth flow -->
+    <div class="card">
+      <svg viewBox="0 0 900 180" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <g font-size="11.5" text-anchor="middle">
+          <rect x="20"  y="66" width="150" height="48" rx="8" fill="rgba(244,114,182,0.12)" stroke="rgba(244,114,182,0.45)"/><text x="95" y="86" fill="#f9a8d4">1 · Client</text><text x="95" y="103" fill="#a8a3b8" font-size="10">connects to URL</text>
+          <rect x="210" y="66" width="150" height="48" rx="8" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.45)"/><text x="285" y="86" fill="#fde047">2 · Server</text><text x="285" y="103" fill="#a8a3b8" font-size="10">"please log in"</text>
+          <rect x="400" y="66" width="150" height="48" rx="8" fill="rgba(99,102,241,0.12)" stroke="rgba(99,102,241,0.45)"/><text x="475" y="86" fill="#c7d2fe">3 · Browser</text><text x="475" y="103" fill="#a8a3b8" font-size="10">you approve</text>
+          <rect x="590" y="66" width="150" height="48" rx="8" fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.45)"/><text x="665" y="86" fill="#6ee7b7">4 · Token</text><text x="665" y="103" fill="#a8a3b8" font-size="10">saved to disk</text>
+          <rect x="770" y="66" width="115" height="48" rx="8" fill="rgba(52,211,153,0.16)" stroke="rgba(52,211,153,0.55)"/><text x="827" y="86" fill="#6ee7b7">5 · Done</text><text x="827" y="103" fill="#a8a3b8" font-size="10">tools work</text>
+        </g>
+        <g stroke="rgba(255,255,255,0.25)" stroke-width="1.4" marker-end="url(#a12)">
+          <path d="M170 90 L210 90"/><path d="M360 90 L400 90"/><path d="M550 90 L590 90"/><path d="M740 90 L770 90"/>
+        </g>
+        <defs><marker id="a12" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker></defs>
+      </svg>
+    </div>
+
+    <div class="prose" style="margin-top:24px">
+      <p>In code it's one word: <code>auth="oauth"</code>. The first time, FastMCP opens your browser, you log in and approve, and it <strong>saves the token to a file</strong> (<code>~/.fastmcp/oauth-mcp-client-cache</code>). After that, no login — it reuses the saved token.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="border-top:3px solid var(--c-good)">
+        <div class="label" style="color:var(--c-good)">On your laptop · testing</div>
+        <p style="font-size:14.5px;color:var(--ink-dim);line-height:1.7;margin-top:10px">The browser popup is fine. You're sitting there to click "approve." Easy.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--s8)">
+        <div class="label" style="color:#fde047">Deployed project · no browser</div>
+        <p style="font-size:14.5px;color:var(--ink-dim);line-height:1.7;margin-top:10px">A cloud server has no screen to pop a browser. So you get the token <b style="color:var(--ink)">once</b>, store it as an env variable / secret, and the code reads it. No popup.</p>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note t"><span class="key">OAUTH vs API KEY</span>Notion &amp; Gmail use OAuth (browser login). Some smaller servers use a plain <b>API key</b> instead — then you just pass the key: <span class="mono" style="color:#6ee7b7">auth="your-key"</span>. Either way, you don't hand-write login code.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 12: CLUB ALL TOOLS ===== -->
+<section class="stage" style="--stage-color: var(--c-good)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--c-good);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">12</div>
+      <div>
+        <h2 class="stage-title">The payoff: <em>club every tool together</em>.</h2>
+        <p class="stage-kicker">This is where it all comes home. Your local <code>@tool</code> functions, your own MCP server, and outside servers like Notion and Gmail — they all become one kind of thing, and you pour them into a single list for the model.</p>
+      </div>
+    </div>
+
+    <!-- the big club diagram -->
+    <div class="card">
+      <svg viewBox="0 0 900 320" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <!-- three sources -->
+        <g font-size="12" text-anchor="middle">
+          <rect x="30" y="30" width="200" height="58" rx="9" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.5)"/>
+          <text x="130" y="54" fill="#5eead4" font-size="13">① Local @tool</text><text x="130" y="73" fill="#a8a3b8" font-size="10.5">search_web · retrieve_docs</text>
+          <rect x="30" y="128" width="200" height="58" rx="9" fill="rgba(251,146,60,0.12)" stroke="rgba(251,146,60,0.5)"/>
+          <text x="130" y="152" fill="#fdba74" font-size="13">② Your MCP server</text><text x="130" y="171" fill="#a8a3b8" font-size="10.5">calc · RAG (shared)</text>
+          <rect x="30" y="226" width="200" height="58" rx="9" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.5)"/>
+          <text x="130" y="250" fill="#fde047" font-size="13">③ Outside servers</text><text x="130" y="269" fill="#a8a3b8" font-size="10.5">Notion ☁ · Gmail ☁</text>
+        </g>
+        <!-- adapter -->
+        <g stroke="rgba(255,255,255,0.22)" stroke-width="1.4" marker-end="url(#a13)">
+          <path d="M230 59 C 320 59, 330 150, 400 156"/>
+          <path d="M230 157 L400 157"/>
+          <path d="M230 255 C 320 255, 330 165, 400 159"/>
+        </g>
+        <rect x="400" y="132" width="150" height="52" rx="9" fill="rgba(167,139,250,0.14)" stroke="rgba(167,139,250,0.55)"/>
+        <text x="475" y="153" fill="#c4b5fd" font-size="12.5" text-anchor="middle">adapter</text>
+        <text x="475" y="171" fill="#a8a3b8" font-size="10" text-anchor="middle">all become LangChain tools</text>
+        <!-- one list -->
+        <path d="M550 158 L620 158" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" marker-end="url(#a13)"/>
+        <rect x="620" y="128" width="140" height="60" rx="9" fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.55)"/>
+        <text x="690" y="150" fill="#6ee7b7" font-size="13" text-anchor="middle">one big</text>
+        <text x="690" y="170" fill="#6ee7b7" font-size="13" text-anchor="middle">tool list</text>
+        <!-- to llm -->
+        <path d="M690 188 L690 240" stroke="rgba(52,211,153,0.5)" stroke-width="1.6" marker-end="url(#a13g)"/>
+        <rect x="615" y="244" width="150" height="48" rx="9" fill="rgba(67,56,202,0.16)" stroke="rgba(99,102,241,0.55)"/>
+        <text x="690" y="273" fill="#c7d2fe" font-size="13" text-anchor="middle">🧠 bind_tools → LLM</text>
+        <defs>
+          <marker id="a13" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker>
+          <marker id="a13g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(52,211,153,0.6)"/></marker>
+        </defs>
+      </svg>
+    </div>
+
+    <button class="code-toggle" onclick="toggleCode('c-club')"><span class="icon">&lt;/&gt;</span> Show the clubbing code</button>
+    <div class="code-panel" id="c-club">
+      <div class="code-panel-header"><span class="filename">agent.py</span><span>local + MCP, all in one list</span></div>
+      <div class="code-block">
+<span class="line"><span class="kw">from</span> <span class="var">langchain_mcp_adapters.client</span> <span class="kw">import</span> <span class="var">MultiServerMCPClient</span></span>
+<span class="line"></span>
+<span class="line"><span class="var">mcp_client</span> <span class="op">=</span> <span class="fn">MultiServerMCPClient</span>({ <span class="cm"># ...calc, notion, gmail...</span> })</span>
+<span class="line"><span class="var">mcp_tools</span> <span class="op">=</span> <span class="kw">await</span> <span class="var">mcp_client</span>.<span class="fn">get_tools</span>()   <span class="cm"># MCP → LangChain tools</span></span>
+<span class="line"></span>
+<span class="line"><span class="var">all_tools</span> <span class="op">=</span> [<span class="var">search_web</span>, <span class="var">retrieve_docs</span>, <span class="op">*</span><span class="var">mcp_tools</span>]   <span class="cm"># club them</span></span>
+<span class="line"><span class="var">llm_with_tools</span> <span class="op">=</span> <span class="var">llm</span>.<span class="fn">bind_tools</span>(<span class="var">all_tools</span>)         <span class="cm"># hand to model</span></span>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note a"><span class="key">THE KEY INSIGHT</span>After the adapter runs, a local <span class="mono">@tool</span> and an MCP tool are the <b>same type</b> — both are LangChain tools. That's why you can mix them in one list freely. The model can't even tell which came from where.</div>
+    </div>
+
+    <div class="pills">
+      <span class="pill l">① local @tool</span>
+      <span class="pill s">② your MCP server</span>
+      <span class="pill r">③ outside servers</span>
+      <span class="pill" style="background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.45);color:#6ee7b7">→ one list → LLM</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 13: TIMEOUT TRUTH ===== -->
+<section class="stage" style="--stage-color: var(--s7)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--s7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">13</div>
+      <div>
+        <h2 class="stage-title">An honest correction: MCP does <em>not</em> beat timeouts.</h2>
+        <p class="stage-kicker">A common myth says "use MCP instead of APIs because APIs time out." Not true. MCP times out too — around 30–60 seconds. If your tool runs for 20 minutes, plain MCP fails just like an API would.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>The real fix for long jobs isn't MCP — it's working <strong>async</strong>: the tool starts the job, hands back a <strong>job ID</strong> right away, and the agent checks back later for the result. MCP recently added this as a feature called <strong>Tasks</strong> (still experimental).</p>
+    </div>
+
+    <div class="vs-grid">
+      <div class="vs-panel bad">
+        <h4>The myth</h4>
+        <div class="vsub">wrong reason to use MCP</div>
+        <ul>
+          <li>"MCP avoids the 30s API timeout"</li>
+          <li>"Long tools just work on MCP"</li>
+          <li>Reality: MCP times out the same way</li>
+        </ul>
+      </div>
+      <div class="vs-mid">✕</div>
+      <div class="vs-panel good">
+        <h4>The truth</h4>
+        <div class="vsub">right reason to use MCP</div>
+        <ul>
+          <li>MCP's value = <b>one standard plug</b></li>
+          <li>Long jobs = solved by <b>async / Tasks</b></li>
+          <li>Start job → return ID → poll later</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="notes" style="margin-top:24px">
+      <div class="note t"><span class="key">SO WHY USE MCP?</span>Not for speed or timeouts. Use it because you stop rewriting glue for every service. One standard, plug in any tool. That — and only that — is the real win.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE 14: WHERE TO FIND ===== -->
+<section class="stage" style="--stage-color: var(--s8)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:var(--s8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">14</div>
+      <div>
+        <h2 class="stage-title">Where to find ready-made servers.</h2>
+        <p class="stage-kicker">You don't build everything. Thousands of servers already exist. Here are the directories to browse, and the simplest servers to demo in class.</p>
+      </div>
+    </div>
+
+    <table class="dtable">
+      <thead><tr><th>Directory</th><th>Good for</th></tr></thead>
+      <tbody>
+        <tr><td class="k">mcpservers.org</td><td>Clean, sorted by category, has an <b>Official</b> filter. Easiest to browse.</td></tr>
+        <tr><td class="k">PulseMCP</td><td>Hand-reviewed daily. Quality over quantity.</td></tr>
+        <tr><td class="k">Glama</td><td>The biggest list — see everything, including niche servers.</td></tr>
+        <tr><td class="k">Smithery</td><td>App-store feel, one-click install commands.</td></tr>
+        <tr><td class="k">GitHub Registry</td><td>The official, canonical index. Verify what's truly official.</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="serif" style="font-size:24px;font-weight:800;margin:40px 0 8px">Simplest servers to demo <span style="color:var(--s8)">(no API key)</span></h3>
+    <div class="three-col" style="margin-top:8px">
+      <div class="card" style="border-top:3px solid var(--c-good)">
+        <div class="serif" style="font-size:18px;font-weight:700;color:var(--c-good)">Time</div>
+        <p style="font-size:13.5px;color:var(--ink-dim);line-height:1.65;margin-top:8px">Current time, timezones. Zero setup. Your perfect first "it works."</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--c-good)">
+        <div class="serif" style="font-size:18px;font-weight:700;color:var(--c-good)">Weather</div>
+        <p style="font-size:13.5px;color:var(--ink-dim);line-height:1.65;margin-top:8px">Open-Meteo. City in, weather out. Real data, still no key.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--c-good)">
+        <div class="serif" style="font-size:18px;font-weight:700;color:var(--c-good)">Fetch</div>
+        <p style="font-size:13.5px;color:var(--ink-dim);line-height:1.65;margin-top:8px">URL in, page text out. Lets the model "read this link."</p>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--ink-dim);line-height:1.7;margin-top:16px;max-width:840px">Teaching order: <b style="color:var(--ink)">Time → Weather → Fetch</b>. Each does one clear job and returns simple text, so students see the standard reply shape clearly.</p>
+  </div>
+</section>
+
+<!-- ===== SUMMARY: THE WHOLE FLOW ===== -->
+<section class="stage" style="--stage-color: var(--s4)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:linear-gradient(180deg,var(--c-local),var(--c-mcp),var(--c-remote));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">∑</div>
+      <div>
+        <h2 class="stage-title">The whole journey, one picture.</h2>
+        <p class="stage-kicker">From a model that can only talk, to an agent that can search, read your docs, and touch Notion and Gmail — all through one standard.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <svg viewBox="0 0 900 130" class="flow-svg" font-family="Inter Tight,sans-serif">
+        <g font-size="11.5" text-anchor="middle">
+          <rect x="10"  y="46" width="120" height="40" rx="7" fill="rgba(67,56,202,0.14)" stroke="rgba(99,102,241,0.5)"/><text x="70" y="71" fill="#c7d2fe">model talks</text>
+          <rect x="160" y="46" width="120" height="40" rx="7" fill="rgba(20,184,166,0.12)" stroke="rgba(20,184,166,0.5)"/><text x="220" y="71" fill="#5eead4">local tools</text>
+          <rect x="310" y="46" width="120" height="40" rx="7" fill="rgba(251,146,60,0.12)" stroke="rgba(251,146,60,0.5)"/><text x="370" y="71" fill="#fdba74">your server</text>
+          <rect x="460" y="46" width="120" height="40" rx="7" fill="rgba(250,204,21,0.12)" stroke="rgba(250,204,21,0.5)"/><text x="520" y="71" fill="#fde047">outside servers</text>
+          <rect x="610" y="46" width="120" height="40" rx="7" fill="rgba(244,114,182,0.12)" stroke="rgba(244,114,182,0.5)"/><text x="670" y="71" fill="#f9a8d4">client clubs all</text>
+          <rect x="760" y="46" width="130" height="40" rx="7" fill="rgba(52,211,153,0.14)" stroke="rgba(52,211,153,0.55)"/><text x="825" y="71" fill="#6ee7b7">agent acts ✓</text>
+        </g>
+        <g stroke="rgba(255,255,255,0.22)" stroke-width="1.3" marker-end="url(#asum)">
+          <path d="M130 66 L160 66"/><path d="M280 66 L310 66"/><path d="M430 66 L460 66"/><path d="M580 66 L610 66"/><path d="M730 66 L760 66"/>
+        </g>
+        <defs><marker id="asum" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,255,255,0.4)"/></marker></defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== KEY TAKEAWAYS ===== -->
+<section class="stage" style="--stage-color: var(--s1)">
+  <div class="container">
+    <div class="stage-header">
+      <div class="stage-num-big" style="background:linear-gradient(180deg,var(--c-local),var(--c-remote),var(--code-accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">∞</div>
+      <div>
+        <h2 class="stage-title">Four ideas to keep.</h2>
+        <p class="stage-kicker">If your students remember nothing else, make sure they remember these.</p>
+      </div>
+    </div>
+
+    <div class="kt-grid">
+      <div class="kt-card" style="border-top-color:var(--c-local)">
+        <div class="kt-n" style="color:var(--c-local)">01</div>
+        <div class="kt-h">A tool gives the model hands.</div>
+        <div class="kt-d">Alone, a model only writes text. Tools let it act — search, read, send. The model decides which tool; something else runs it.</div>
+      </div>
+      <div class="kt-card" style="border-top-color:var(--c-mcp)">
+        <div class="kt-n" style="color:#c4b5fd">02</div>
+        <div class="kt-h">MCP = one standard plug.</div>
+        <div class="kt-d">Its real value is not speed. It's that nobody rewrites the same glue. Every server speaks the same language and replies in the same <code style="color:#6ee7b7">content → text</code> shape.</div>
+      </div>
+      <div class="kt-card" style="border-top-color:var(--c-server)">
+        <div class="kt-n" style="color:var(--c-server)">03</div>
+        <div class="kt-h">Server holds, client carries, model decides.</div>
+        <div class="kt-d">Kitchen, waiter, customer. One client can serve many servers. Local servers you start; remote ones you connect to with a login.</div>
+      </div>
+      <div class="kt-card" style="border-top-color:var(--code-accent)">
+        <div class="kt-n" style="color:var(--code-accent)">04</div>
+        <div class="kt-h">Everything ends in one list.</div>
+        <div class="kt-d">Local tools, your server, Notion, Gmail — adapt them all into LangChain tools, club into one list, bind to the LLM. The model picks freely.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <p class="quote">"Don't teach the model to do everything itself.<br>Hand it the right tool, in the same shape, every time."</p>
+    <div class="sig">Model Context Protocol · A visual lesson · For the curious</div>
+  </div>
+</footer>
+
+<script>
+function toggleCode(id){
+  const panel = document.getElementById(id);
+  const btn = panel.previousElementSibling;
+  const isOpen = panel.classList.toggle('open');
+  btn.innerHTML = isOpen ? '<span class="icon">×</span> Hide code' : '<span class="icon">&lt;/&gt;</span> Show code';
+}
+</script>
+
+</body>
+</html>

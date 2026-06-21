@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Knowledge & Presentations Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06060c;
+      --card-bg: rgba(255, 255, 255, 0.02);
+      --card-border: rgba(255, 255, 255, 0.06);
+      --ink: #f8fafc;
+      --ink-dim: #94a3b8;
+      --ink-faint: #475569;
+      --violet: #8b5cf6;
+      --sky: #0ea5e9;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --indigo: #6366f1;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(139, 92, 246, 0.12), transparent 35%),
+        radial-gradient(circle at 88% 75%, rgba(99, 102, 241, 0.12), transparent 35%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header styling */
+    header {
+      padding: 64px 0 32px 0;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(6, 6, 12, 0.4);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kicker {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--violet);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 40%, var(--ink-dim) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h1 em {
+      font-style: italic;
+      font-weight: 300;
+      color: var(--sky);
+      -webkit-text-fill-color: var(--sky);
+    }
+
+    .subtitle {
+      font-size: clamp(14px, 1.8vw, 16px);
+      color: var(--ink-dim);
+      max-width: 800px;
+      font-weight: 300;
+    }
+
+    /* Controls Bar */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 28px 0;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+      max-width: 320px;
+      width: 100%;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-box:focus {
+      border-color: var(--violet);
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.15);
+    }
+
+    .filter-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      color: var(--ink-dim);
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-btn:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .tag-btn.active {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: var(--violet);
+      color: #fff;
+    }
+
+    /* Grid Layout */
+    .section-title {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 40px 0 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      border-left: 3px solid var(--violet);
+      padding-left: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    /* Card Design */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in srgb, var(--accent) 30%, var(--card-border));
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(var(--accent-rgb), 0.04);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .type-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .card-title {
+      font-family: 'Fraunces', serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: var(--ink-dim);
+      font-weight: 300;
+      line-height: 1.6;
+      flex-grow: 1;
+    }
+
+    .view-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .card:hover .view-link {
+      gap: 10px;
+    }
+
+    /* Accent color variants */
+    .violet-theme { --accent: var(--violet); --accent-rgb: 139, 92, 246; }
+    .sky-theme { --accent: var(--sky); --accent-rgb: 14, 165, 233; }
+    .emerald-theme { --accent: var(--emerald); --accent-rgb: 16, 185, 129; }
+    .amber-theme { --accent: var(--amber); --accent-rgb: 245, 158, 11; }
+    .rose-theme { --accent: var(--rose); --accent-rgb: 244, 63, 94; }
+    .indigo-theme { --accent: var(--indigo); --accent-rgb: 99, 102, 241; }
+
+    .type-html { background: rgba(14, 165, 233, 0.1); color: var(--sky); border: 1px solid rgba(14, 165, 233, 0.2); }
+    .type-md { background: rgba(245, 158, 11, 0.1); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.2); }
+
+    /* Footer styling */
+    footer {
+      margin-top: auto;
+      padding: 48px 0;
+      border-top: 1px solid var(--card-border);
+      text-align: center;
+      color: var(--ink-faint);
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 40px 0 24px 0;
+      }
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-box {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-content">
+      <span class="kicker">Interactive Knowledge Portal</span>
+      <h1>Visual Learning &amp; <em>Architecture</em> Guides</h1>
+      <p class="subtitle">A curated collection of visual guides, deployment masterclasses, AI framework deep-dives, and system design presentations.</p>
+    </div>
+  </header>
+
+  <main class="container" style="padding-bottom: 64px;">
+    <div class="controls">
+      <input type="text" class="search-box" id="search" placeholder="Search guides by title or description..." aria-label="Search guides">
+      <div class="filter-tags" id="tags">
+        <button class="tag-btn active" data-tag="all">All Files</button>
+        <button class="tag-btn" data-tag="devops">DevOps</button>
+        <button class="tag-btn" data-tag="agentic">Agentic AI</button>
+        <button class="tag-btn" data-tag="deep-learning">Deep Learning</button>
+        <button class="tag-btn" data-tag="observability">Observability</button>
+        <button class="tag-btn" data-tag="career">Career</button>
+      </div>
+    </div>
+
+    <!-- Category DevOps -->
+    <div class="category-section" data-category="devops">
+      <h2 class="section-title">DevOps &amp; Cloud Infrastructure</h2>
+      <div class="grid">
+        <a href="deployment_masterclass.html" class="card sky-theme" data-search-text="from laptop to cloud docker kubernetes eks masterclass devops architecture containerization">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">From Laptop to Cloud</h3>
+          <p class="card-desc">The complete journey of putting multi-service apps online. Learn Docker, local Kubernetes with minikube, and production AWS EKS step-by-step.</p>
+          <div class="view-link">Explore Masterclass &rarr;</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Category Agentic AI -->
+    <div class="category-section" data-category="agentic">
+      <h2 class="section-title">Agentic AI &amp; Integration</h2>
+      <div class="grid">
+        <a href="agent_eval_lesson.html" class="card violet-theme" data-search-text="agent evaluation lesson testing validating llm agents compliance critic">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">Agent Evaluation Lesson</h3>
+          <p class="card-desc">Deep dive guide on evaluation frameworks, orchestrator verification, compliant system designs, and evaluating outputs of LLM agents.</p>
+          <div class="view-link">View Lesson &rarr;</div>
+        </a>
+
+        <a href="mcp_basics.html" class="card indigo-theme" data-search-text="model context protocol mcp basics server client database api integrations">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">Model Context Protocol (MCP) Basics</h3>
+          <p class="card-desc">Understanding client-server architectures under MCP. Learn how LLMs securely query databases, run local tools, and link APIs.</p>
+          <div class="view-link">Open Basics &rarr;</div>
+        </a>
+
+        <a href="mcp_visual.html" class="card sky-theme" data-search-text="mcp visual connections model context protocol layout mappings workflow diagram">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">MCP Visual Flow Mappings</h3>
+          <p class="card-desc">Interactive diagrams visualizing connection handshakes, request routes, and tool execution flows under the Model Context Protocol.</p>
+          <div class="view-link">View Visual Mappings &rarr;</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Category Deep Learning -->
+    <div class="category-section" data-category="deep-learning">
+      <h2 class="section-title">Deep Learning &amp; Visual Guides</h2>
+      <div class="grid">
+        <a href="lora_qlora_visual.html" class="card rose-theme" data-search-text="lora qlora low rank adaptation parameter efficient fine tuning peft model training quantized">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">LoRA &amp; QLoRA Visualized</h3>
+          <p class="card-desc">Intuitive visual walk-through of Parameter-Efficient Fine-Tuning (PEFT) mechanisms, rank matrices, and quantized weights adapter layouts.</p>
+          <div class="view-link">View LoRA Guide &rarr;</div>
+        </a>
+
+        <a href="guardrails_visual.html" class="card amber-theme" data-search-text="guardrails output filtering validation content safety llm alignment visual model">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">Guardrails Visual Walkthrough</h3>
+          <p class="card-desc">Visual mapping of prompt interceptors, toxic content filters, output parsers, structure validation checks, and validation flow maps.</p>
+          <div class="view-link">Open Guardrails Visual &rarr;</div>
+        </a>
+
+        <a href="minigpt_visual.html" class="card violet-theme" data-search-text="minigpt vision architecture projection layer multimodality neural network layout">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">MiniGPT Architecture Visuals</h3>
+          <p class="card-desc">Visual representation of projection interfaces linking vision encoders to LLM query representations for multimodal processing.</p>
+          <div class="view-link">Open MiniGPT Visual &rarr;</div>
+        </a>
+
+        <a href="rag_visual.html" class="card sky-theme" data-search-text="rag visual retrieval augmented generation embedding index vector storage search pipeline">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">RAG Pipeline Mappings</h3>
+          <p class="card-desc">Step-by-step visual routing from document ingestion to indexing, semantic search, vector lookup, context injection, and generation.</p>
+          <div class="view-link">Open RAG Visual &rarr;</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Category Observability -->
+    <div class="category-section" data-category="observability">
+      <h2 class="section-title">System Observability</h2>
+      <div class="grid">
+        <a href="observability_visual.html" class="card emerald-theme" data-search-text="observability visual monitoring tracing dashboard telemetry collector pipeline layout">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">Observability Visual Layout</h3>
+          <p class="card-desc">Interactive dashboard layouts mapping telemetry collectors, Prometheus scrapers, OpenTelemetry pipelines, and Jaeger tracing systems.</p>
+          <div class="view-link">View Dashboard Layout &rarr;</div>
+        </a>
+
+        <a href="observability.md" class="card amber-theme" data-search-text="observability markdown guide telemetry tracking tracing log metrics collectors setup prometheus grafana opentelemetry">
+          <div class="card-meta">
+            <span class="type-badge type-md">Markdown Guide</span>
+          </div>
+          <h3 class="card-title">Observability Guide</h3>
+          <p class="card-desc">Comprehensive reference guide covering log collectors, metric instrumentation, span creation, traces, Prometheus integration, and Grafana dash configs.</p>
+          <div class="view-link">Read Markdown Guide &rarr;</div>
+        </a>
+
+        <a href="observability_tools_landscape.md" class="card violet-theme" data-search-text="observability tools landscape metrics logging tracing application monitoring jaeger prometheus zipkin logstash loki">
+          <div class="card-meta">
+            <span class="type-badge type-md">Markdown Reference</span>
+          </div>
+          <h3 class="card-title">Observability Tools Landscape</h3>
+          <p class="card-desc">Comparative analysis of modern tracing, monitoring, and log aggregation stacks (Jaeger vs Zipkin, Loki vs ELK, OpenTelemetry vs proprietary agents).</p>
+          <div class="view-link">Open Comparison Table &rarr;</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Category Career -->
+    <div class="category-section" data-category="career">
+      <h2 class="section-title">Career &amp; Interview Prep</h2>
+      <div class="grid">
+        <a href="carbon_interview_prep.html" class="card rose-theme" data-search-text="carbon interview prep system design algorithmic principles coding practices technical review">
+          <div class="card-meta">
+            <span class="type-badge type-html">HTML Presentation</span>
+          </div>
+          <h3 class="card-title">Carbon Interview Preparation</h3>
+          <p class="card-desc">Structured prep kit covering distributed storage design, query optimizations, low-latency system principles, and typical coding patterns.</p>
+          <div class="view-link">Open Prep Kit &rarr;</div>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      &copy; 2026 Developer Knowledge Hub &bull; Generated &amp; Optimized for GitHub Pages
+    </div>
+  </footer>
+
+  <script>
+    // Search and category tags filtering logic
+    const searchInput = document.getElementById('search');
+    const tagButtons = document.querySelectorAll('.tag-btn');
+    const categorySections = document.querySelectorAll('.category-section');
+    const cards = document.querySelectorAll('.card');
+
+    function filterContent() {
+      const query = searchInput.value.toLowerCase().trim();
+      const activeTag = document.querySelector('.tag-btn.active').dataset.tag;
+
+      categorySections.forEach(section => {
+        const category = section.dataset.category;
+        const categoryCards = section.querySelectorAll('.card');
+        let visibleInSectionCount = 0;
+
+        categoryCards.forEach(card => {
+          const searchText = card.dataset.searchText.toLowerCase();
+          const matchesSearch = query === '' || searchText.includes(query);
+          const matchesCategory = activeTag === 'all' || activeTag === category;
+
+          if (matchesSearch && matchesCategory) {
+            card.style.display = 'flex';
+            visibleInSectionCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        // Hide the entire category section header if no cards in it match the filters
+        if (visibleInSectionCount > 0) {
+          section.style.display = 'block';
+        } else {
+          section.style.display = 'none';
+        }
+      });
+    }
+
+    searchInput.addEventListener('input', filterContent);
+
+    tagButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        tagButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        filterContent();
+      });
+    });
+  </script>
+</body>
+</html>

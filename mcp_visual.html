@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Context Protocol (MCP) - Production Multi-Agent Systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090e;
+  --ink:#f4f1ea;
+  --ink-dim:#aba7b9;
+  --ink-faint:#5f5a72;
+  --sky:#0ea5e9;
+  --emerald:#10b981;
+  --indigo:#6366f1;
+  --violet:#8b5cf6;
+  --amber:#f59e0b;
+  --rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.03);
+  --card-border:rgba(255,255,255,.08);
+  --panel:rgba(255,255,255,.02);
+  --accent:#8b5cf6; /* Violet */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter Tight',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.6;
+  overflow-x:hidden;
+  background-color: #08080c;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.08), transparent 25%);
+  background-attachment: fixed;
+}
+.container{max-width:1280px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{
+  font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.18em;
+  font-size:11px;
+  color:var(--ink-dim);
+}
+.hero{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:80px 0 60px;
+  position:relative;
+}
+.hero .stage-num{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-weight:300;
+  font-size:14px;
+  color:var(--ink-faint);
+  margin-bottom:24px;
+}
+.hero h1{
+  font-size:clamp(48px,9vw,110px);
+  margin-bottom:32px;
+  background:linear-gradient(135deg,var(--violet),var(--indigo),var(--sky));
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{
+  font-size:clamp(18px,2.2vw,24px);
+  max-width:870px;
+  color:var(--ink-dim);
+  margin-bottom:52px;
+  font-weight:300;
+}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1000px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:36px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+.scroll-hint{
+  position:absolute;
+  bottom:36px;
+  left:50%;
+  transform:translateX(-50%);
+  color:var(--ink-faint);
+  font-size:11px;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  animation:bob 2s ease-in-out infinite;
+}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+.tabs{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(8,8,12,.91);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--card-border);
+  padding:14px 0;
+}
+.tabs-inner{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.tab-btn{
+  font:600 12px 'JetBrains Mono',monospace;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:11px 14px;
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--card-border);
+  border-radius:4px;
+  color:var(--ink-dim);
+  cursor:pointer;
+}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stage{padding:96px 0;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:48px;align-items:start}
+.stage-num-big{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:64px;
+  line-height:1;
+  color:var(--accent);
+  font-weight:300;
+}
+.stage-title{
+  font-family:'Fraunces',serif;
+  font-weight:800;
+  font-size:clamp(34px,5vw,58px);
+  letter-spacing:-.03em;
+  line-height:1.05;
+  margin-bottom:12px;
+}
+.stage-kicker{font-size:18px;color:var(--ink-dim);font-weight:300;max-width:870px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:6px;
+  padding:28px;
+  backdrop-filter:blur(10px);
+}
+.card.accent{border-left:3px solid var(--accent)}
+.card h3,.card h4{font-family:'Fraunces',serif;font-size:25px;line-height:1.1;margin-bottom:12px}
+.card p,.card li{color:var(--ink-dim);font-size:17px;font-weight:300}
+.card ul{margin:14px 0 0 20px}
+.card li{margin-bottom:10px}
+.strong{color:var(--ink);font-weight:600}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0}
+.pill{
+  font:700 11px 'JetBrains Mono',monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+  border-radius:4px;
+  padding:7px 9px;
+}
+.pipeline{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;
+  margin:32px 0;
+}
+.pipe-step{
+  min-height:142px;
+  padding:16px;
+  border:1px solid var(--card-border);
+  background:var(--panel);
+  border-radius:6px;
+  position:relative;
+}
+.pipe-step:after{
+  content:"";
+  position:absolute;
+  right:-8px;
+  top:50%;
+  width:8px;
+  height:1px;
+  background:var(--card-border);
+}
+.pipe-step:last-child:after{display:none}
+.pipe-step .n{font:800 12px 'JetBrains Mono',monospace;color:var(--accent);margin-bottom:8px}
+.pipe-step h4{font-family:'Fraunces',serif;font-size:18px;margin-bottom:7px}
+.pipe-step p{font-size:14px;color:var(--ink-dim)}
+.router{
+  display:grid;
+  grid-template-columns:1fr 1.2fr;
+  gap:24px;
+  margin-top:24px;
+}
+.route-list{display:grid;gap:10px}
+.route{
+  display:grid;
+  grid-template-columns:150px 1fr;
+  gap:14px;
+  padding:14px;
+  border:1px solid var(--card-border);
+  background:rgba(255,255,255,.025);
+  border-radius:5px;
+}
+.route .kind{font:800 12px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.route p{font-size:15px;color:var(--ink-dim)}
+.storage-map{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:24px;
+  align-items:stretch;
+}
+.store-box{
+  padding:28px;
+  border:1px solid var(--card-border);
+  border-radius:6px;
+  background:rgba(0,0,0,.2);
+}
+.store-box h3{font-family:'Fraunces',serif;font-size:31px;margin-bottom:12px}
+.store-box.inprocess{border-color:color-mix(in srgb,var(--emerald) 36%,var(--card-border))}
+.store-box.stdio{border-color:color-mix(in srgb,var(--indigo) 36%,var(--card-border))}
+.store-box.sse{border-color:color-mix(in srgb,var(--violet) 36%,var(--card-border))}
+.nodes{position:relative;min-height:190px;margin:20px 0}
+.node{
+  position:absolute;
+  width:90px;
+  height:42px;
+  border:1px solid color-mix(in srgb,var(--indigo) 55%,white);
+  background:rgba(99,102,241,.14);
+  border-radius:5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:800 11px 'JetBrains Mono',monospace;
+}
+.edge{position:absolute;height:1px;background:rgba(255,255,255,.25);transform-origin:left center}
+.vocab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.term{
+  padding:18px;
+  border:1px solid var(--card-border);
+  border-radius:5px;
+  background:rgba(255,255,255,.025);
+}
+.term .word{font:800 13px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.term p{font-size:15px;color:var(--ink-dim)}
+.code-container { margin-top: 24px; background: #07070a; border: 1px solid var(--card-border); border-radius: 6px; overflow: hidden; }
+.code-header { padding: 8px 16px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--card-border); font: 600 12px 'JetBrains Mono', monospace; color: var(--ink-dim); }
+pre { padding: 16px; margin: 0; overflow-x: auto; font: 400 13px/1.6 'JetBrains Mono', monospace; color: #e2e8f0; }
+.kw { color: #f472b6; }
+.fn { color: #38bdf8; }
+.st { color: #a3e635; }
+.cm { color: #64748b; font-style: italic; }
+.cl { color: #fbbf24; }
+.compare{width:100%;border-collapse:separate;border-spacing:0;margin-top:16px}
+.compare th{
+  font:700 11px 'JetBrains Mono',monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-dim);
+  text-align:left;
+  padding:13px 14px;
+  border-bottom:1px solid var(--card-border);
+}
+.compare td{padding:14px;border-bottom:1px solid var(--card-border);color:var(--ink-dim);vertical-align:top}
+.compare td:first-child{color:var(--ink);font-weight:700}
+.summary-band{
+  padding:42px;
+  border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),rgba(255,255,255,.025));
+  border-radius:6px;
+}
+.summary-band h3{font-family:'Fraunces',serif;font-size:34px;margin-bottom:18px}
+.summary-band li{font-size:18px;color:var(--ink-dim);margin:12px 0}
+@media(max-width:1060px){.pipeline{grid-template-columns:1fr 1fr}.pipe-step:after{display:none}}
+@media(max-width:900px){
+  .stats,.grid-2,.grid-3,.router,.storage-map,.vocab-grid,.pipeline{grid-template-columns:1fr}
+  .stage-header{grid-template-columns:1fr}
+  .route{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body style="--accent:var(--violet)">
+<section class="hero">
+  <div class="container">
+    <div class="stage-num">Model Context Protocol (MCP) lesson for the multi-agent research system</div>
+    <h1 class="display">Model Context <em>Protocol</em></h1>
+    <p class="sub">Model Context Protocol (MCP) is the open standard that connects AI agents to secure data sources and local tools. This lesson covers: FastMCP architecture, Notion integrations, fallback recursive block scanners, dynamic routing orchestration, and key security paradigms.</p>
+    <div class="stats">
+      <div class="stat"><div class="num">3</div><div class="label">transport modes</div></div>
+      <div class="stat"><div class="num">2</div><div class="label">mcp integrations</div></div>
+      <div class="stat"><div class="num">5</div><div class="label">security pillars</div></div>
+      <div class="stat"><div class="num">1</div><div class="label">unified standard</div></div>
+    </div>
+  </div>
+  <div class="scroll-hint">Start lesson</div>
+</section>
+
+<nav class="tabs">
+  <div class="container">
+    <div class="tabs-inner">
+      <button class="tab-btn active" data-tab="map">System & Transports</button>
+      <button class="tab-btn" data-tab="notion">Notion Integration</button>
+      <button class="tab-btn" data-tab="routing">Dynamic Orchestration</button>
+      <button class="tab-btn" data-tab="security">Security Models</button>
+      <button class="tab-btn" data-tab="summary">Vocab & Recap</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <!-- TAB 1: SYSTEM & TRANSPORTS -->
+  <div class="tab-panel active" id="panel-map">
+    <section class="stage">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">01</div>
+          <div>
+            <h2 class="stage-title">Transports connect clients to tool execution.</h2>
+            <p class="stage-kicker">MCP defines how clients communicate with servers. Our system teaches two environments: in-process (in-memory) for simple operations, and standalone network tools for external platforms.</p>
+          </div>
+        </div>
+
+        <div class="storage-map">
+          <div class="store-box inprocess">
+            <h3>In-Process (RAM)</h3>
+            <p>The client imports the Python server class directly into the running memory. There are no ports, no subprocesses, and no network cards used. It's fast and operates inside the main server's thread pool.</p>
+            <div class="pill-row"><span class="pill">fastmcp client</span><span class="pill">in-memory</span><span class="pill">zero config</span></div>
+          </div>
+          <div class="store-box stdio">
+            <h3>Stdio Subprocess</h3>
+            <p>The client spawns the server as a child process (e.g. Node or Python CLI) and sends JSON-RPC messages via standard input/output. This keeps environments isolated.</p>
+            <div class="pill-row"><span class="pill">stdio pipe</span><span class="pill">child process</span><span class="pill">isolated env</span></div>
+          </div>
+          <div class="store-box sse">
+            <h3>SSE (HTTP/Web)</h3>
+            <p>Server-Sent Events allow the server to expose tools over HTTP. An external client (like Claude Desktop or another machine) calls tools by connecting to the HTTP SSE endpoint.</p>
+            <div class="pill-row"><span class="pill">http / sse</span><span class="pill">fastapi mount</span><span class="pill">network access</span></div>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 24px;">
+          <div class="card accent">
+            <h3>Why In-Process makes testing simple</h3>
+            <p>For students, setting up multiple terminal sessions for servers can be confusing. FastMCP allows us to import the server directly and run it in-process. The backend treats it as a protocol-compliant MCP server, but it executes locally in RAM.</p>
+          </div>
+          <div class="card accent">
+            <h3>Command-Line Standalone Testing</h3>
+            <p>We can launch the Math server as a standalone stdio listener or run the FastMCP inspector dashboard to interact with tools visually using the CLI.</p>
+          </div>
+          <div class="card accent">
+            <h3>Multi-Server Host Connectors</h3>
+            <p>LLM platforms (like Claude Desktop, Gemini, or Cursor IDE) act as <strong>MCP Hosts</strong>. A single host can connect to <strong>multiple independent MCP servers</strong> simultaneously, merging their tool registries dynamically so the LLM has access to all tools together.</p>
+          </div>
+        </div>
+
+        <div class="code-container">
+          <div class="code-header">backend/mcp/client.py (In-Process FastMCP Transport)</div>
+          <pre><code><span class="kw">from</span> backend.mcp.server <span class="kw">import</span> mcp <span class="kw">as</span> math_server
+<span class="kw">from</span> fastmcp <span class="kw">import</span> Client
+
+<span class="kw">async def</span> <span class="fn">_call_tool</span>(name: <span class="cl">str</span>, args: <span class="cl">dict</span>) -> <span class="cl">str</span>:
+    <span class="cm"># FastMCP establishes an in-memory bridge with the server object</span>
+    <span class="kw">async with</span> <span class="cl">Client</span>(math_server) <span class="kw">as</span> client:
+        result = <span class="kw">await</span> client.call_tool(name, args)
+        <span class="kw">return</span> result.content[<span class="st">0</span>].text</code></pre>
+        </div>
+
+        <div class="code-container">
+          <div class="code-header">CLI Commands (Running the MCP Server Standalone)</div>
+          <pre><code><span class="cm"># Run the Math Server standalone over standard input/output (Stdio)</span>
+.venv/bin/python backend/mcp/server.py
+
+<span class="cm"># Run the FastMCP Developer Inspector Dashboard (Runs UI at http://localhost:8000)</span>
+.venv/bin/fastmcp dev inspector backend/mcp/server.py</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 2: NOTION INTEGRATION -->
+  <div class="tab-panel" id="panel-notion">
+    <section class="stage" style="--accent:var(--sky)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">02</div>
+          <div>
+            <h2 class="stage-title">Overcoming Notion search API limits.</h2>
+            <p class="stage-kicker">Notion's search API only matches page/database titles, not page contents. We implemented a smart fallback block scanner to recursively extract nested child content and toggle blocks.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card accent">
+            <h3>The Search Problem</h3>
+            <p>If a student has a page called <strong>"Quotes"</strong> and inside that page they have sub-headers or toggle blocks like <strong>"Jiddu Krishnamurthy"</strong>, searching the Notion API for <code>"Krishnamurthy"</code> returns <strong>zero pages</strong> because the *page title* is "Quotes", not the name of the author.</p>
+          </div>
+          <div class="card accent">
+            <h3>The Fallback Solution</h3>
+            <p>If direct search yields no matching pages, the tool fetches **all** recent workspace pages. It reads the block content of those pages, searches block text for keywords, and if it finds a matching block with children (like a Toggle block), it recursively fetches child blocks to retrieve the nested quotes.</p>
+          </div>
+        </div>
+
+        <div class="code-container">
+          <div class="code-header">backend/mcp/notion_client.py (Recursive Block Fetcher)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">search_notion</span>(query: <span class="cl">str</span> = <span class="st">""</span>) -> <span class="cl">str</span>:
+    <span class="cm"># 1. Try direct title search</span>
+    results = notion.search(query=query).get(<span class="st">"results"</span>, [])
+    <span class="kw">if not</span> results:
+        <span class="cm"># 2. Fallback: Scan blocks in the top page (e.g. "Quotes")</span>
+        all_pages = notion.search(query=<span class="st">""</span>).get(<span class="st">"results"</span>, [])
+        <span class="kw">for</span> page <span class="kw">in</span> all_pages:
+            blocks = notion.blocks.children.list(block_id=page[<span class="st">"id"</span>]).get(<span class="st">"results"</span>, [])
+            <span class="kw">for</span> block <span class="kw">in</span> blocks:
+                <span class="kw">if</span> query.lower() <span class="kw">in</span> get_block_text(block).lower():
+                    <span class="cm"># 3. Read child blocks recursively (e.g., inside toggle blocks)</span>
+                    <span class="kw">if</span> block.get(<span class="st">"has_children"</span>):
+                        child_blocks = notion.blocks.children.list(block_id=block[<span class="st">"id"</span>]).get(<span class="st">"results"</span>, [])
+                        <span class="kw">return</span> extract_text_from_blocks(child_blocks)</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 3: DYNAMIC ORCHESTRATION -->
+  <div class="tab-panel" id="panel-routing">
+    <section class="stage" style="--accent:var(--indigo)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">03</div>
+          <div>
+            <h2 class="stage-title">Bypassing heavy steps for simple tool execution.</h2>
+            <p class="stage-kicker">Academic research pipelines are slow and expensive. We updated the orchestrator to route math and Notion tasks directly to the Writer and Critic nodes, skipping heavy search and reading steps.</p>
+          </div>
+        </div>
+
+        <div class="pipeline">
+          <div class="pipe-step"><div class="n">1</div><h4>Question Classify</h4><p>Identify if question is mathematical or Notion-specific.</p></div>
+          <div class="pipe-step"><div class="n">2</div><h4>Bypass Team</h4><p>Set team to only ['Writer', 'Critic'] dynamically.</p></div>
+          <div class="pipe-step"><div class="n">3</div><h4>Skip Search</h4><p>Graph planner/searcher nodes are completely un-wired.</p></div>
+          <div class="pipe-step"><div class="n">4</div><h4>Writer Node</h4><p>Writer executes the MCP tools directly in a loop.</p></div>
+          <div class="pipe-step"><div class="n">5</div><h4>Critic Node</h4><p>Critic short-circuits to auto-approve without LLM cost.</p></div>
+          <div class="pipe-step"><div class="n">6</div><h4>Deliver</h4><p>Return final answer immediately, saving seconds.</p></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card accent">
+            <h3>How Team Selection routes nodes</h3>
+            <p>In <code>team_selector.py</code>, we analyze keywords. If a question is basic math (e.g., "what is 42 * 9") or references Notion, it returns a 2-agent team. Because LangGraph builds the graph shape dynamically based on this team list, the other nodes are never even compiled into the graph.</p>
+          </div>
+          <div class="card accent">
+            <h3>Short-circuiting the Critic</h3>
+            <p>Our Critic agent has strict requirements (requiring 3+ sources, 100+ words, academic tone). If applied to a simple math question or listing Notion pages, the Critic would reject the answer. We short-circuited the Critic to immediately return `approved=True` for these special routes.</p>
+          </div>
+        </div>
+
+        <div class="code-container">
+          <div class="code-header">backend/config/team_selector.py (Dynamic Node Wiring)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">is_notion</span>(question: <span class="cl">str</span>) -> <span class="cl">bool</span>:
+    keywords = [<span class="st">"notion"</span>, <span class="st">"quotes"</span>, <span class="st">"personal workspace"</span>]
+    <span class="kw">return</span> <span class="cl">any</span>(k <span class="kw">in</span> question.lower() <span class="kw">for</span> k <span class="kw">in</span> keywords)
+
+<span class="kw">def</span> <span class="fn">select_team</span>(question: <span class="cl">str</span>) -> <span class="cl">list</span>[<span class="cl">str</span>]:
+    <span class="cm"># Direct math and Notion queries directly to Writer/Critic only</span>
+    <span class="kw">if</span> is_arithmetic(question) <span class="kw">or</span> is_notion(question):
+        <span class="kw">return</span> [<span class="st">"Writer"</span>, <span class="st">"Critic"</span>]
+    
+    <span class="cm"># Standard research pipeline team</span>
+    <span class="kw">return</span> [<span class="st">"Planner"</span>, <span class="st">"Searcher"</span>, <span class="st">"Writer"</span>, <span class="st">"Critic"</span>]</code></pre>
+        </div>
+
+        <div class="code-container">
+          <div class="code-header">backend/agents/critic.py (Critic Gate Bypass)</div>
+          <pre><code><span class="kw">def</span> <span class="fn">critic_agent</span>(question: <span class="cl">str</span>, answer: <span class="cl">str</span>, sources: <span class="cl">list</span>) -> <span class="cl">tuple</span>[<span class="cl">bool</span>, <span class="cl">list</span>[<span class="cl">str</span>]]:
+    <span class="cm"># Simple/Math/Notion routes get immediate approval bypass</span>
+    <span class="kw">if</span> is_arithmetic(question) <span class="kw">or</span> is_notion(question):
+        <span class="kw">return</span> <span class="cl">True</span>, []
+        
+    <span class="cm"># Otherwise perform heavy multi-aspect academic checks</span>
+    issues = []
+    <span class="kw">if</span> <span class="cl">len</span>(sources) < <span class="st">3</span>:
+        issues.append(<span class="st">"Needs at least 3 distinct sources."</span>)
+    ...</code></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 4: SECURITY MODELS -->
+  <div class="tab-panel" id="panel-security">
+    <section class="stage" style="--accent:var(--violet)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">04</div>
+          <div>
+            <h2 class="stage-title">Five pillars of MCP security.</h2>
+            <p class="stage-kicker">Giving LLMs access to code execution and filesystems introduces massive risks. Our codebase demonstrates several active techniques to sandbox, restrict, and guard the system.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card accent">
+            <h3>1. Least Privilege Tool Binding</h3>
+            <p>We only expose tools that are required for the current query. A general search agent never receives the API tokens or execution bindings for write/delete tools or mathematical MCP libraries.</p>
+          </div>
+          <div class="card accent">
+            <h3>2. Secure Secrets Handling</h3>
+            <p>Keys like the <code>NOTION_TOKEN</code> are kept strictly in local environment configurations. They are passed directly to child server environments on startup and never exposed to git, the model, or in system logs.</p>
+          </div>
+          <div class="card accent">
+            <h3>3. Input & Output Guardrails</h3>
+            <p>Using Microsoft Presidio, we analyze text entering and exiting the backend. This helps identify and sanitize PII (Personally Identifiable Information) before it gets forwarded to external LLM providers or tools.</p>
+          </div>
+          <div class="card accent">
+            <h3>4. Restricted Execution (No Shells)</h3>
+            <p>Our MCP server runs isolated code blocks. It does not contain tools that accept raw shell strings or execute CLI commands. This prevents Remote Code Execution (RCE) via LLM prompt injections.</p>
+          </div>
+        </div>
+
+        <div class="card accent" style="margin-top: 24px;">
+          <h3>5. Production Sandboxing (When to Containerize)</h3>
+          <p>The recommended architecture for production is **Dockerization**. You should containerize your MCP servers when:</p>
+          <ul style="margin: 10px 0 10px 20px; font-size: 16px; color: var(--ink-dim);">
+            <li><strong>Runtime Conflicts exist:</strong> One server uses Node.js (Notion), another uses Python (Math), and another requires Go.</li>
+            <li><strong>Host protection is required:</strong> The LLM has tools that read, write, or delete files, or run command line shells. Sandboxing prevents malicious mutations on the host filesystem.</li>
+            <li><strong>API Key Isolation is needed:</strong> Each container gets injected with only its specific credentials, preventing servers from reading each other's secrets.</li>
+          </ul>
+        </div>
+
+        <table class="compare">
+          <thead><tr><th>Security Control</th><th>Vulnerability Prevented</th><th>How to implement</th></tr></thead>
+          <tbody>
+            <tr><td>Parameter Validation</td><td>SQL Injection / Command Injection in tool arguments.</td><td>Enforce Pydantic types and run validation checks inside tool functions.</td></tr>
+            <tr><td>Human-In-The-Loop (HITL)</td><td>Unapproved writes/deletions, financial transactions, or emails.</td><td>Prompt users with a conformation modal before running any state-changing tools.</td></tr>
+            <tr><td>Network Segregation</td><td>SSRF (Server-Side Request Forgery) using local tools.</td><td>Restrict MCP servers to outbound communication only and sandbox them in a private network.</td></tr>
+            <tr><td>Docker Containers</td><td>Host filesystem takeover.</td><td>Configure servers inside minimal Alpine Docker containers with read-only root filesystems.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB 5: VOCAB & SUMMARY -->
+  <div class="tab-panel" id="panel-summary">
+    <section class="stage" style="--accent:var(--amber)">
+      <div class="container">
+        <div class="stage-header">
+          <div class="stage-num-big">05</div>
+          <div>
+            <h2 class="stage-title">Vocabulary and final recap.</h2>
+            <p class="stage-kicker">Use these terms to explain the Model Context Protocol ecosystem clearly to your students.</p>
+          </div>
+        </div>
+
+        <div class="vocab-grid">
+          <div class="term"><div class="word">MCP</div><p>Model Context Protocol: An open standard protocol for linking LLMs to tools and datasources.</p></div>
+          <div class="term"><div class="word">Client</div><p>The host application (like LangGraph, Claude Desktop, or our FastAPI server) that queries tools and coordinates LLM calls.</p></div>
+          <div class="term"><div class="word">Server</div><p>A standalone utility (like our Math server or Notion server) that exposes tools, resources, and prompts over a transport.</p></div>
+          <div class="term"><div class="word">Stdio Transport</div><p>An MCP transport communicating via standard input/output streams between parent and child processes.</p></div>
+          <div class="term"><div class="word">SSE Transport</div><p>Server-Sent Events: communicating asynchronously over HTTP, allowing remote network access.</p></div>
+          <div class="term"><div class="word">In-Process</div><p>Running the server directly inside the client's python process memory without sockets or child processes.</p></div>
+          <div class="term"><div class="word">FastMCP</div><p>A high-level framework from Anthropic to quickly build Python-based MCP servers and clients.</p></div>
+          <div class="term"><div class="word">Guardrails</div><p>Verification filters (like PII scans and prompt injection filters) that intercept data before/after LLM execution.</p></div>
+          <div class="term"><div class="word">Sandboxing</div><p>Restricting tool execution inside isolated virtual spaces (like Docker) to secure the host machine.</p></div>
+        </div>
+
+        <div class="summary-band" style="margin-top:32px">
+          <h3>Final recap for students</h3>
+          <ul>
+            <li>MCP standardizes how LLM clients discover and call tools, removing custom API wrappers.</li>
+            <li>In-process transport executes tools instantly in memory, simplifying local code orchestration.</li>
+            <li>Notion integrations require block-level fallback scans because standard Search APIs are limited to page titles.</li>
+            <li>Routing simple math/Notion queries directly to Writer/Critic saves CPU cycles, time, and LLM token costs.</li>
+            <li>Security must be built at all layers: least privilege routing, input sanitization, and containerized sandboxing (Docker).</li>
+            <li>A single MCP host (Claude, Gemini, etc.) can connect to multiple MCP servers, dynamically merging their tools.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tab = button.dataset.tab;
+      buttons.forEach(btn => btn.classList.remove('active'));
+      panels.forEach(panel => panel.classList.remove('active'));
+      button.classList.add('active');
+      document.getElementById(`panel-${tab}`).classList.add('active');
+      window.scrollTo({top: document.querySelector('.tabs').offsetTop, behavior: 'smooth'});
+    });
+  });
+});
+</script>
+</body>
+</html>
