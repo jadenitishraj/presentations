@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Developer Knowledge & Presentations Portal</title>
+  <title>Developer Knowledge Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,300&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -22,13 +22,9 @@
       --rose: #f43f5e;
       --indigo: #6366f1;
     }
-    
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: 'Inter', sans-serif;
       background-color: var(--bg);
@@ -45,27 +41,20 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1100px;
       width: 100%;
       margin: 0 auto;
       padding: 0 24px;
     }
 
-    /* Header styling */
-    header {
-      padding: 64px 0 32px 0;
-      border-bottom: 1px solid var(--card-border);
-      background: rgba(6, 6, 12, 0.4);
-      backdrop-filter: blur(16px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header-content {
+    /* Hero */
+    .hero {
+      min-height: 40vh;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      justify-content: center;
+      padding: 100px 0 40px;
+      text-align: center;
     }
 
     .kicker {
@@ -75,18 +64,20 @@
       text-transform: uppercase;
       letter-spacing: 0.22em;
       font-weight: 600;
+      margin-bottom: 16px;
     }
 
     h1 {
       font-family: 'Fraunces', serif;
-      font-size: clamp(28px, 4vw, 44px);
+      font-size: clamp(36px, 5vw, 56px);
       font-weight: 900;
       letter-spacing: -0.03em;
-      line-height: 1.1;
+      line-height: 1.05;
       background: linear-gradient(135deg, #fff 40%, var(--ink-dim) 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
     }
 
     h1 em {
@@ -97,190 +88,132 @@
     }
 
     .subtitle {
-      font-size: clamp(14px, 1.8vw, 16px);
+      font-size: clamp(15px, 1.8vw, 17px);
       color: var(--ink-dim);
-      max-width: 800px;
+      max-width: 660px;
+      margin: 0 auto;
       font-weight: 300;
     }
 
-    /* Controls Bar */
-    .controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 28px 0;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .search-box {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 10px 16px;
-      color: var(--ink);
-      font-family: inherit;
-      font-size: 14px;
-      max-width: 320px;
-      width: 100%;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-
-    .search-box:focus {
-      border-color: var(--violet);
-      background: rgba(255, 255, 255, 0.06);
-      box-shadow: 0 0 16px rgba(139, 92, 246, 0.15);
-    }
-
-    .filter-tags {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .tag-btn {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 6px 14px;
-      color: var(--ink-dim);
-      font-size: 11px;
+    /* Topic Grid */
+    .topics-label {
       font-family: 'JetBrains Mono', monospace;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.2em;
+      color: var(--ink-faint);
+      text-align: center;
+      margin: 48px 0 28px;
     }
 
-    .tag-btn:hover {
-      color: var(--ink);
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .tag-btn.active {
-      background: rgba(139, 92, 246, 0.15);
-      border-color: var(--violet);
-      color: #fff;
-    }
-
-    /* Grid Layout */
-    .section-title {
-      font-family: 'Fraunces', serif;
-      font-size: 20px;
-      font-weight: 700;
-      margin: 40px 0 20px 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--ink);
-      border-left: 3px solid var(--violet);
-      padding-left: 12px;
-    }
-
-    .grid {
+    .topic-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      padding-bottom: 80px;
     }
 
-    /* Card Design */
-    .card {
+    /* Topic Card */
+    .topic-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 36px 32px 32px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer;
       position: relative;
       overflow: hidden;
       text-decoration: none;
     }
 
-    .card::before {
+    .topic-card::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.025) 0%, transparent 100%);
       opacity: 0;
-      transition: opacity 0.25s ease;
+      transition: opacity 0.3s ease;
     }
 
-    .card:hover {
-      transform: translateY(-4px);
-      border-color: color-mix(in srgb, var(--accent) 30%, var(--card-border));
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(var(--accent-rgb), 0.04);
-      background: rgba(255, 255, 255, 0.035);
+    .topic-card:hover {
+      transform: translateY(-6px);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--card-border));
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(var(--accent-rgb), 0.06);
+      background: rgba(255, 255, 255, 0.04);
     }
 
-    .card:hover::before {
-      opacity: 1;
-    }
+    .topic-card:hover::before { opacity: 1; }
 
-    .card-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .type-badge {
+    .topic-badge {
       font-family: 'JetBrains Mono', monospace;
       font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      padding: 3px 8px;
+      letter-spacing: 0.12em;
+      padding: 4px 10px;
       border-radius: 4px;
       font-weight: 600;
+      align-self: flex-start;
     }
 
-    .card-title {
+    .badge-system { background: rgba(16, 185, 129, 0.1); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge-genai { background: rgba(139, 92, 246, 0.1); color: var(--violet); border: 1px solid rgba(139, 92, 246, 0.2); }
+
+    .topic-title {
       font-family: 'Fraunces', serif;
-      font-size: 19px;
-      font-weight: 700;
+      font-size: 26px;
+      font-weight: 800;
       color: var(--ink);
-      line-height: 1.35;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
     }
 
-    .card-desc {
-      font-size: 14px;
+    .topic-desc {
+      font-size: 15px;
       color: var(--ink-dim);
       font-weight: 300;
-      line-height: 1.6;
+      line-height: 1.65;
       flex-grow: 1;
     }
 
-    .view-link {
+    .topic-stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 4px;
+    }
+
+    .topic-stat {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
+      font-size: 11px;
+      color: var(--ink-faint);
+      letter-spacing: 0.04em;
+    }
+
+    .topic-stat strong {
+      color: var(--ink-dim);
+      font-weight: 600;
+    }
+
+    .topic-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
       color: var(--accent);
-      font-weight: 500;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       transition: gap 0.2s ease;
       margin-top: 8px;
     }
 
-    .card:hover .view-link {
-      gap: 10px;
-    }
+    .topic-card:hover .topic-link { gap: 12px; }
 
-    /* Accent color variants */
-    .violet-theme { --accent: var(--violet); --accent-rgb: 139, 92, 246; }
-    .sky-theme { --accent: var(--sky); --accent-rgb: 14, 165, 233; }
     .emerald-theme { --accent: var(--emerald); --accent-rgb: 16, 185, 129; }
-    .amber-theme { --accent: var(--amber); --accent-rgb: 245, 158, 11; }
-    .rose-theme { --accent: var(--rose); --accent-rgb: 244, 63, 94; }
-    .indigo-theme { --accent: var(--indigo); --accent-rgb: 99, 102, 241; }
+    .violet-theme { --accent: var(--violet); --accent-rgb: 139, 92, 246; }
 
-    .type-html { background: rgba(14, 165, 233, 0.1); color: var(--sky); border: 1px solid rgba(14, 165, 233, 0.2); }
-    .type-md { background: rgba(245, 158, 11, 0.1); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.2); }
-    .type-site { background: rgba(16, 185, 129, 0.1); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.2); }
-
-    /* Footer styling */
+    /* Footer */
     footer {
       margin-top: auto;
       padding: 48px 0;
@@ -292,250 +225,55 @@
       letter-spacing: 0.05em;
     }
 
-    @media (max-width: 768px) {
-      header {
-        padding: 40px 0 24px 0;
-      }
-      .controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .search-box {
-        max-width: none;
-      }
+    @media (max-width: 480px) {
+      .topic-grid { grid-template-columns: 1fr; }
+      .hero { padding: 60px 0 24px; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="container header-content">
-      <span class="kicker">Interactive Knowledge Portal</span>
-      <h1>Visual Learning &amp; <em>Architecture</em> Guides</h1>
-      <p class="subtitle">A curated collection of visual guides, deployment masterclasses, AI framework deep-dives, and system design presentations.</p>
+  <div class="container">
+    <section class="hero">
+      <div class="kicker">Interactive Knowledge Portal</div>
+      <h1>Learn by <em>Exploring</em></h1>
+      <p class="subtitle">Curated interactive guides on system design and generative AI — visual, hands-on, and built to click through at your own pace.</p>
+    </section>
+
+    <div class="topics-label">Choose a topic to explore</div>
+
+    <div class="topic-grid">
+      <!-- System Design -->
+      <a href="ddia-interactive/index.html" class="topic-card emerald-theme">
+        <span class="topic-badge badge-system">Interactive Site · 12 Chapters</span>
+        <h2 class="topic-title">System Design &amp; Architecture</h2>
+        <p class="topic-desc">Interactive companion to Martin Kleppmann's <em>Designing Data-Intensive Applications</em> — replication, partitioning, transactions, consensus, batch &amp; stream processing, with quizzes, diagrams, and a 278-term glossary.</p>
+        <div class="topic-stats">
+          <span class="topic-stat"><strong>12</strong> chapters</span>
+          <span class="topic-stat"><strong>278</strong> terms</span>
+          <span class="topic-stat"><strong>Live</strong> widgets</span>
+        </div>
+        <div class="topic-link">Explore All Chapters &rarr;</div>
+      </a>
+
+      <!-- Generative AI -->
+      <a href="gen-ai.html" class="topic-card violet-theme">
+        <span class="topic-badge badge-genai">Visual Guides · 11 Resources</span>
+        <h2 class="topic-title">Generative AI &amp; MLOps</h2>
+        <p class="topic-desc">Visual masterclasses on Docker &amp; Kubernetes deployment, agentic AI evaluation, MCP protocol, LoRA fine-tuning, guardrails, RAG pipelines, observability, and interview prep.</p>
+        <div class="topic-stats">
+          <span class="topic-stat"><strong>6</strong> categories</span>
+          <span class="topic-stat"><strong>11</strong> guides</span>
+          <span class="topic-stat"><strong>Visual</strong> walkthroughs</span>
+        </div>
+        <div class="topic-link">Browse All Guides &rarr;</div>
+      </a>
     </div>
-  </header>
-
-  <main class="container" style="padding-bottom: 64px;">
-    <div class="controls">
-      <input type="text" class="search-box" id="search" placeholder="Search guides by title or description..." aria-label="Search guides">
-      <div class="filter-tags" id="tags">
-        <button class="tag-btn active" data-tag="all">All Files</button>
-        <button class="tag-btn" data-tag="devops">DevOps</button>
-        <button class="tag-btn" data-tag="agentic">Agentic AI</button>
-        <button class="tag-btn" data-tag="deep-learning">Deep Learning</button>
-        <button class="tag-btn" data-tag="observability">Observability</button>
-        <button class="tag-btn" data-tag="system-design">System Design</button>
-        <button class="tag-btn" data-tag="career">Career</button>
-      </div>
-    </div>
-
-    <!-- Category DevOps -->
-    <div class="category-section" data-category="devops">
-      <h2 class="section-title">DevOps &amp; Cloud Infrastructure</h2>
-      <div class="grid">
-        <a href="deployment_masterclass.html" class="card sky-theme" data-search-text="from laptop to cloud docker kubernetes eks masterclass devops architecture containerization">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">From Laptop to Cloud</h3>
-          <p class="card-desc">The complete journey of putting multi-service apps online. Learn Docker, local Kubernetes with minikube, and production AWS EKS step-by-step.</p>
-          <div class="view-link">Explore Masterclass &rarr;</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Category System Design -->
-    <div class="category-section" data-category="system-design">
-      <h2 class="section-title">System Design &amp; Architecture</h2>
-      <div class="grid">
-        <a href="ddia-interactive/index.html" class="card emerald-theme" data-search-text="ddia designing data intensive applications martin kleppmann replication partitioning transactions consistency consensus batch stream processing distributed systems database storage retrieval encoding">
-          <div class="card-meta">
-            <span class="type-badge type-site">Interactive Site</span>
-          </div>
-          <h3 class="card-title">Designing Data-Intensive Applications</h3>
-          <p class="card-desc">Interactive companion to Martin Kleppmann's DDIA — 12 chapters covering replication, partitioning, transactions, consensus, batch &amp; stream processing, with quizzes, diagrams, and a 278-term glossary.</p>
-          <div class="view-link">Explore All 12 Chapters &rarr;</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Category Agentic AI -->
-    <div class="category-section" data-category="agentic">
-      <h2 class="section-title">Agentic AI &amp; Integration</h2>
-      <div class="grid">
-        <a href="agent_eval_lesson.html" class="card violet-theme" data-search-text="agent evaluation lesson testing validating llm agents compliance critic">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">Agent Evaluation Lesson</h3>
-          <p class="card-desc">Deep dive guide on evaluation frameworks, orchestrator verification, compliant system designs, and evaluating outputs of LLM agents.</p>
-          <div class="view-link">View Lesson &rarr;</div>
-        </a>
-
-        <a href="mcp_basics.html" class="card indigo-theme" data-search-text="model context protocol mcp basics server client database api integrations">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">Model Context Protocol (MCP) Basics</h3>
-          <p class="card-desc">Understanding client-server architectures under MCP. Learn how LLMs securely query databases, run local tools, and link APIs.</p>
-          <div class="view-link">Open Basics &rarr;</div>
-        </a>
-
-        <a href="mcp_visual.html" class="card sky-theme" data-search-text="mcp visual connections model context protocol layout mappings workflow diagram">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">MCP Visual Flow Mappings</h3>
-          <p class="card-desc">Interactive diagrams visualizing connection handshakes, request routes, and tool execution flows under the Model Context Protocol.</p>
-          <div class="view-link">View Visual Mappings &rarr;</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Category Deep Learning -->
-    <div class="category-section" data-category="deep-learning">
-      <h2 class="section-title">Deep Learning &amp; Visual Guides</h2>
-      <div class="grid">
-        <a href="lora_qlora_visual.html" class="card rose-theme" data-search-text="lora qlora low rank adaptation parameter efficient fine tuning peft model training quantized">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">LoRA &amp; QLoRA Visualized</h3>
-          <p class="card-desc">Intuitive visual walk-through of Parameter-Efficient Fine-Tuning (PEFT) mechanisms, rank matrices, and quantized weights adapter layouts.</p>
-          <div class="view-link">View LoRA Guide &rarr;</div>
-        </a>
-
-        <a href="guardrails_visual.html" class="card amber-theme" data-search-text="guardrails output filtering validation content safety llm alignment visual model">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">Guardrails Visual Walkthrough</h3>
-          <p class="card-desc">Visual mapping of prompt interceptors, toxic content filters, output parsers, structure validation checks, and validation flow maps.</p>
-          <div class="view-link">Open Guardrails Visual &rarr;</div>
-        </a>
-
-        <a href="minigpt_visual.html" class="card violet-theme" data-search-text="minigpt vision architecture projection layer multimodality neural network layout">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">MiniGPT Architecture Visuals</h3>
-          <p class="card-desc">Visual representation of projection interfaces linking vision encoders to LLM query representations for multimodal processing.</p>
-          <div class="view-link">Open MiniGPT Visual &rarr;</div>
-        </a>
-
-        <a href="rag_visual.html" class="card sky-theme" data-search-text="rag visual retrieval augmented generation embedding index vector storage search pipeline">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">RAG Pipeline Mappings</h3>
-          <p class="card-desc">Step-by-step visual routing from document ingestion to indexing, semantic search, vector lookup, context injection, and generation.</p>
-          <div class="view-link">Open RAG Visual &rarr;</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Category Observability -->
-    <div class="category-section" data-category="observability">
-      <h2 class="section-title">System Observability</h2>
-      <div class="grid">
-        <a href="observability_visual.html" class="card emerald-theme" data-search-text="observability visual monitoring tracing dashboard telemetry collector pipeline layout">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">Observability Visual Layout</h3>
-          <p class="card-desc">Interactive dashboard layouts mapping telemetry collectors, Prometheus scrapers, OpenTelemetry pipelines, and Jaeger tracing systems.</p>
-          <div class="view-link">View Dashboard Layout &rarr;</div>
-        </a>
-
-        <a href="observability.md" class="card amber-theme" data-search-text="observability markdown guide telemetry tracking tracing log metrics collectors setup prometheus grafana opentelemetry">
-          <div class="card-meta">
-            <span class="type-badge type-md">Markdown Guide</span>
-          </div>
-          <h3 class="card-title">Observability Guide</h3>
-          <p class="card-desc">Comprehensive reference guide covering log collectors, metric instrumentation, span creation, traces, Prometheus integration, and Grafana dash configs.</p>
-          <div class="view-link">Read Markdown Guide &rarr;</div>
-        </a>
-
-        <a href="observability_tools_landscape.md" class="card violet-theme" data-search-text="observability tools landscape metrics logging tracing application monitoring jaeger prometheus zipkin logstash loki">
-          <div class="card-meta">
-            <span class="type-badge type-md">Markdown Reference</span>
-          </div>
-          <h3 class="card-title">Observability Tools Landscape</h3>
-          <p class="card-desc">Comparative analysis of modern tracing, monitoring, and log aggregation stacks (Jaeger vs Zipkin, Loki vs ELK, OpenTelemetry vs proprietary agents).</p>
-          <div class="view-link">Open Comparison Table &rarr;</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- Category Career -->
-    <div class="category-section" data-category="career">
-      <h2 class="section-title">Career &amp; Interview Prep</h2>
-      <div class="grid">
-        <a href="carbon_interview_prep.html" class="card rose-theme" data-search-text="carbon interview prep system design algorithmic principles coding practices technical review">
-          <div class="card-meta">
-            <span class="type-badge type-html">HTML Presentation</span>
-          </div>
-          <h3 class="card-title">Carbon Interview Preparation</h3>
-          <p class="card-desc">Structured prep kit covering distributed storage design, query optimizations, low-latency system principles, and typical coding patterns.</p>
-          <div class="view-link">Open Prep Kit &rarr;</div>
-        </a>
-      </div>
-    </div>
-  </main>
+  </div>
 
   <footer>
     <div class="container">
-      &copy; 2026 Developer Knowledge Hub &bull; Generated &amp; Optimized for GitHub Pages
+      &copy; 2026 Developer Knowledge Hub &bull; Hosted on GitHub Pages
     </div>
   </footer>
-
-  <script>
-    // Search and category tags filtering logic
-    const searchInput = document.getElementById('search');
-    const tagButtons = document.querySelectorAll('.tag-btn');
-    const categorySections = document.querySelectorAll('.category-section');
-    const cards = document.querySelectorAll('.card');
-
-    function filterContent() {
-      const query = searchInput.value.toLowerCase().trim();
-      const activeTag = document.querySelector('.tag-btn.active').dataset.tag;
-
-      categorySections.forEach(section => {
-        const category = section.dataset.category;
-        const categoryCards = section.querySelectorAll('.card');
-        let visibleInSectionCount = 0;
-
-        categoryCards.forEach(card => {
-          const searchText = card.dataset.searchText.toLowerCase();
-          const matchesSearch = query === '' || searchText.includes(query);
-          const matchesCategory = activeTag === 'all' || activeTag === category;
-
-          if (matchesSearch && matchesCategory) {
-            card.style.display = 'flex';
-            visibleInSectionCount++;
-          } else {
-            card.style.display = 'none';
-          }
-        });
-
-        // Hide the entire category section header if no cards in it match the filters
-        if (visibleInSectionCount > 0) {
-          section.style.display = 'block';
-        } else {
-          section.style.display = 'none';
-        }
-      });
-    }
-
-    searchInput.addEventListener('input', filterContent);
-
-    tagButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        tagButtons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        filterContent();
-      });
-    });
-  </script>
 </body>
 </html>
