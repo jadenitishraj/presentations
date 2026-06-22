@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDIA · 03 — Storage & Retrieval</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#09090e;--ink:#f4f1ea;--ink-dim:#aba7b9;--ink-faint:#5f5a72;
+  --sky:#0ea5e9;--emerald:#10b981;--indigo:#6366f1;--violet:#8b5cf6;--amber:#f59e0b;--rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.03);--card-border:rgba(255,255,255,.08);--panel:rgba(255,255,255,.02);--accent:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter Tight',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden;background-color:#08080c;
+  background-image:radial-gradient(circle at 15% 50%, rgba(139,92,246,.08), transparent 25%),radial-gradient(circle at 85% 30%, rgba(99,102,241,.08), transparent 25%);background-attachment:fixed;}
+.container{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--ink-dim)}
+
+/* ===== top site nav ===== */
+.sitenav{position:sticky;top:0;z-index:120;background:rgba(8,8,12,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--card-border)}
+.sitenav-inner{max-width:1180px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:18px}
+.brand{font-family:'Fraunces',serif;font-weight:800;font-size:16px;letter-spacing:-.02em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand em{font-style:italic;font-weight:300;color:var(--violet)}
+.nav-spacer{flex:1}
+.nav-prevnext{display:flex;gap:8px}
+.nav-prevnext a{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--card-border);border-radius:5px;color:var(--ink-dim);text-decoration:none;transition:all .18s}
+.nav-prevnext a:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.nav-prevnext a.disabled{opacity:.3;pointer-events:none}
+.dropdown{position:relative}
+.dropbtn{font:600 12px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;color:#e7e1ff;cursor:pointer;display:flex;align-items:center;gap:8px}
+.dropbtn .chev{transition:transform .2s}
+.dropdown.open .chev{transform:rotate(180deg)}
+.dropmenu{position:absolute;top:calc(100% + 8px);left:0;min-width:340px;max-height:70vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--card-border));border-radius:10px;padding:8px;box-shadow:0 24px 70px rgba(0,0,0,.6);display:none;z-index:130}
+.dropdown.open .dropmenu{display:block;animation:fadeIn .2s ease}
+.dropmenu a{display:flex;gap:12px;align-items:baseline;padding:10px 12px;border-radius:7px;text-decoration:none;color:var(--ink-dim);transition:all .15s}
+.dropmenu a:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.dropmenu a.cur{background:color-mix(in srgb,var(--accent) 16%,transparent);color:#fff}
+.dropmenu a .dn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--violet);flex:0 0 26px}
+.dropmenu a .dt{font-size:14.5px;font-weight:400;line-height:1.3}
+.dropmenu .part{font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:12px 12px 6px}
+
+/* hero */
+.hero{min-height:86vh;display:flex;flex-direction:column;justify-content:center;padding:70px 0 60px;position:relative}
+.hero .stage-num{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:14px;color:var(--ink-faint);margin-bottom:24px}
+.hero h1{font-size:clamp(42px,7.6vw,88px);margin-bottom:28px;background:linear-gradient(135deg,var(--violet),var(--indigo),var(--sky));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{font-size:clamp(18px,2.2vw,22px);max-width:880px;color:var(--ink-dim);margin-bottom:48px;font-weight:300}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1040px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:32px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+
+/* tabs */
+.tabs{position:sticky;top:57px;z-index:50;background:rgba(8,8,12,.91);backdrop-filter:blur(14px);border-bottom:1px solid var(--card-border);padding:14px 0}
+.tabs-inner{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tab-btn{font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:4px;color:var(--ink-dim);cursor:pointer;transition:all .2s}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* stage */
+.stage{padding:64px 0 84px;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:36px;align-items:start}
+.stage-num-big{font-family:'Fraunces',serif;font-style:italic;font-size:60px;line-height:1;color:var(--accent);font-weight:300}
+.stage-title{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.03em;line-height:1.05;margin-bottom:12px}
+.stage-kicker{font-size:17px;color:var(--ink-dim);font-weight:300;max-width:870px}
+
+/* body */
+.body-wrap{display:grid;grid-template-columns:80px 1fr;gap:24px}
+.prose{max-width:880px}
+.prose h3{font-family:'Fraunces',serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:34px 0 14px;color:var(--ink)}
+.prose h3:first-child{margin-top:0}
+.prose h4{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:28px 0 12px}
+.prose p{font-size:16.5px;color:var(--ink-dim);font-weight:300;line-height:1.72;margin-bottom:15px}
+.prose p strong{color:var(--ink);font-weight:600}
+.prose ul{list-style:none;margin:6px 0 18px}
+.prose li{font-size:16px;color:var(--ink-dim);font-weight:300;line-height:1.65;padding-left:22px;position:relative;margin-bottom:9px}
+.prose li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.prose li strong{color:var(--ink);font-weight:600}
+code.inl{font-family:'JetBrains Mono',monospace;font-size:13.5px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22);border-radius:4px;padding:2px 6px;color:#d6ccff}
+
+/* callouts */
+.callout{border-radius:8px;padding:18px 20px;margin:22px 0;border:1px solid;backdrop-filter:blur(8px);font-size:15.5px;font-weight:300;line-height:1.65}
+.callout .co-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:block}
+.callout p{margin:0 0 8px;font-size:15.5px;color:var(--ink-dim)}
+.callout p:last-child{margin-bottom:0}
+.callout strong{color:var(--ink);font-weight:600}
+.co-trap{background:rgba(244,63,94,.07);border-color:rgba(244,63,94,.3)}.co-trap .co-tag{color:var(--rose)}
+.co-note{background:rgba(14,165,233,.06);border-color:rgba(14,165,233,.28)}.co-note .co-tag{color:var(--sky)}
+.co-cost{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3)}.co-cost .co-tag{color:var(--amber)}
+.co-win{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.28)}.co-win .co-tag{color:var(--emerald)}
+
+/* vocab */
+.vocab-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0 8px}
+.vocab{background:var(--card-bg);border:1px solid var(--card-border);border-left:3px solid var(--accent);border-radius:6px;padding:16px 18px}
+.vocab .vt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;color:#d6ccff;margin-bottom:6px}
+.vocab .vd{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.55}
+
+/* concept cards -> modal */
+.code-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+.code-card{display:flex;align-items:center;gap:13px;background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-left:3px solid var(--sky);border-radius:6px;padding:16px 18px;cursor:pointer;transition:all .18s}
+.code-card:hover{background:rgba(255,255,255,.05);transform:translateY(-2px);border-left-color:var(--violet)}
+.code-card .cc-ico{font:700 14px 'JetBrains Mono',monospace;color:var(--sky);flex:0 0 auto}
+.code-card .cc-t{font-size:15px;color:var(--ink);font-weight:500;line-height:1.3}
+.code-card .cc-s{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+.code-card .cc-go{margin-left:auto;font:700 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);flex:0 0 auto}
+.code-card:hover .cc-go{color:var(--violet)}
+
+/* code block */
+.codeblock{background:#0c0c13;border:1px solid var(--card-border);border-radius:8px;margin:18px 0;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--card-border);background:rgba(255,255,255,.015)}
+.codeblock .cb-title{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.codeblock pre{margin:0;padding:16px 18px;overflow-x:auto}
+.codeblock code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cfd3e0;white-space:pre}
+.cmt{color:#6a6a85}.kw{color:#c4b5fd}.str{color:#7fd4a0}.flg{color:#7cc5f0}
+
+/* table */
+.cmp{width:100%;border-collapse:collapse;margin:20px 0;font-size:14.5px}
+.cmp th,.cmp td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--card-border)}
+.cmp th{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.cmp td{color:var(--ink-dim);font-weight:300}
+.cmp td:first-child{color:var(--ink);font-weight:500}
+.cmp tr:hover td{background:rgba(255,255,255,.02)}
+.yes{color:var(--emerald);font-weight:600}.no{color:var(--rose);font-weight:600}
+
+/* diagram */
+.diagram{background:rgba(13,13,20,.6);border:1px solid var(--card-border);border-radius:10px;padding:26px 22px;margin:22px 0}
+.diagram .dg-cap{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center;margin-top:16px}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.node{background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;padding:11px 15px;font:600 13px 'Inter Tight',sans-serif;color:var(--ink);text-align:center;min-width:96px}
+.node.sky{background:rgba(14,165,233,.13);border-color:rgba(14,165,233,.34)}
+.node.em{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.32)}
+.node.am{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32)}
+.node.ro{background:rgba(244,63,94,.13);border-color:rgba(244,63,94,.36)}
+.arrow{color:var(--ink-faint);font-size:18px}
+.box-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.mbox{flex:1;min-width:150px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.mbox .mb-t{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.mbox .mb-d{font-size:13px;color:var(--ink-dim);font-weight:300}
+
+/* quiz */
+.quiz{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:22px 24px;margin:18px 0}
+.quiz .q{font-size:16.5px;color:var(--ink);font-weight:500;margin-bottom:14px}
+.quiz .opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:12px 16px;margin-bottom:9px;color:var(--ink-dim);font-size:15px;cursor:pointer;transition:all .15s;font-family:'Inter Tight',sans-serif}
+.quiz .opt:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.quiz .opt.correct{border-color:var(--emerald);background:rgba(16,185,129,.12);color:var(--ink)}
+.quiz .opt.wrong{border-color:var(--rose);background:rgba(244,63,94,.1)}
+.quiz .explain{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.6;margin-top:10px;padding-top:12px;border-top:1px solid var(--card-border);display:none}
+.quiz .explain.show{display:block}.quiz .explain strong{color:var(--ink)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,4,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex;animation:fadeIn .25s ease}
+.modal{max-width:820px;width:100%;max-height:88vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));border-radius:10px;padding:34px 36px 30px;position:relative;box-shadow:0 30px 90px rgba(0,0,0,.65);}
+.modal .m-cat{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modal .m-q{font-family:'Fraunces',serif;font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin-bottom:6px}
+.modal .m-hint{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px}
+.modal .m-body{font-size:15.5px;color:var(--ink-dim);font-weight:300;line-height:1.68}
+.modal .m-body p{margin-bottom:13px}.modal .m-body strong{color:var(--ink);font-weight:600}
+.modal .m-body ul{list-style:none;margin:6px 0 14px}
+.modal .m-body li{padding-left:22px;position:relative;margin-bottom:8px}
+.modal .m-body li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.modal-close:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,transparent)}
+
+.foot{padding:50px 0 80px;text-align:center;border-top:1px solid var(--card-border);color:var(--ink-faint);font-size:14px}
+
+@media(max-width:900px){
+  .stats,.vocab-grid,.code-cards{grid-template-columns:1fr}
+  .stage-header,.body-wrap{grid-template-columns:1fr}
+  .dropmenu{min-width:280px}
+  .nav-prevnext{display:none}
+  .modal{padding:28px 22px 24px}
+  .cmp{font-size:13px}.cmp th,.cmp td{padding:10px 10px}
+  .tabs{top:55px}
+}
+
+/* ===== interactive widgets (shared) ===== */
+.widget{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:24px;margin:24px 0}
+.widget .w-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);margin-bottom:6px}
+.widget .w-title{font-family:'Fraunces',serif;font-weight:800;font-size:20px;letter-spacing:-.02em;margin-bottom:16px;color:var(--ink)}
+.widget label{display:block;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.widget input[type=range]{width:100%;accent-color:var(--violet);margin-bottom:6px}
+.widget .w-val{font-family:'JetBrains Mono',monospace;color:#d6ccff;font-weight:700}
+.widget select{background:#11111a;color:var(--ink);border:1px solid var(--card-border);border-radius:6px;padding:9px 12px;font-family:'Inter Tight',sans-serif;font-size:14px;margin-bottom:10px}
+.w-out{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.w-out .wo{background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.w-out .wo .wo-n{font-family:'Fraunces',serif;font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ink)}
+.w-out .wo .wo-l{font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
+.w-btn{display:inline-block;width:auto;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:8px 16px;color:var(--ink-dim);font:600 12px 'JetBrains Mono',monospace;cursor:pointer;transition:all .15s;margin-top:8px}
+.w-btn:hover{background:rgba(255,255,255,.07);color:var(--ink);border-color:var(--accent)}
+.pbars{display:flex;align-items:flex-end;gap:2px;height:120px;margin:10px 0 4px}
+.pbar{flex:1;background:rgba(139,92,246,.25);border-radius:2px 2px 0 0;transition:background .2s}
+.pbar.p50{background:var(--emerald)}.pbar.p95{background:var(--amber)}.pbar.p99{background:var(--rose)}
+.pleg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font:600 11px 'JetBrains Mono',monospace}
+.pleg span{display:flex;align-items:center;gap:6px;color:var(--ink-dim)}
+.pleg i{width:11px;height:11px;border-radius:2px;display:inline-block}
+@media(max-width:900px){.w-out{grid-template-columns:1fr}}
+</style>
+</head>
+<body style="--accent:var(--violet)">
+<nav class="sitenav">
+  <div class="sitenav-inner">
+    <a class="brand" href="index.html">DDIA <em>interactive</em></a>
+    <div class="dropdown" id="chDrop">
+      <button class="dropbtn" id="chDropBtn">Chapters <span class="chev">▾</span></button>
+      <div class="dropmenu"><div class="part">Part I · Foundations of Data Systems</div><a class="" href="chapter01.html"><span class="dn">01</span><span class="dt">Reliable, Scalable & Maintainable</span></a><a class="" href="chapter02.html"><span class="dn">02</span><span class="dt">Data Models & Query Languages</span></a><a class="cur" href="chapter03.html"><span class="dn">03</span><span class="dt">Storage & Retrieval</span></a><a class="" href="chapter04.html"><span class="dn">04</span><span class="dt">Encoding & Evolution</span></a><div class="part">Part II · Distributed Data</div><a class="" href="chapter05.html"><span class="dn">05</span><span class="dt">Replication</span></a><a class="" href="chapter06.html"><span class="dn">06</span><span class="dt">Partitioning</span></a><a class="" href="chapter07.html"><span class="dn">07</span><span class="dt">Transactions</span></a><a class="" href="chapter08.html"><span class="dn">08</span><span class="dt">The Trouble with Distributed Systems</span></a><a class="" href="chapter09.html"><span class="dn">09</span><span class="dt">Consistency & Consensus</span></a><div class="part">Part III · Derived Data</div><a class="" href="chapter10.html"><span class="dn">10</span><span class="dt">Batch Processing</span></a><a class="" href="chapter11.html"><span class="dn">11</span><span class="dt">Stream Processing</span></a><a class="" href="chapter12.html"><span class="dn">12</span><span class="dt">The Future of Data Systems</span></a></div>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-prevnext"><a href="glossary.html">Dictionary</a><a href="chapter02.html">← Prev</a><a href="chapter04.html">Next →</a></div>
+  </div>
+</nav>
+<section class="hero"><div class="container">
+  <div class="stage-num">DDIA · Chapter 3 · Part I — Foundations</div>
+  <h1 class="display">Storage<br>&amp; <em>Retrieval</em></h1>
+  <p class="sub">Open the hood. How databases actually put bytes on disk and find them again — hash indexes, SSTables and LSM-trees, B-trees — and why analytics storage (columns) looks nothing like transaction storage.</p>
+  <div class="stats"><div class="stat"><div class="num">2</div><div class="label">engine families</div></div><div class="stat"><div class="num">7</div><div class="label">sections</div></div><div class="stat"><div class="num">1</div><div class="label">live widget</div></div><div class="stat"><div class="num">click</div><div class="label">for deep dives</div></div></div>
+</div></section>
+<nav class="tabs"><div class="container"><div class="tabs-inner" id="tabBar"></div></div></nav>
+<main id="main"></main>
+<div class="foot container">Two big ideas: LSM-trees (log-structured, write-optimised) vs B-trees (in-place, read-optimised) for transactions — and column-oriented storage for analytics. Knowing the trade-offs lets you pick the right database.</div>
+<div class="modal-overlay" id="overlay"><div class="modal" id="modal">
+  <button class="modal-close" id="closeBtn" aria-label="Close">&times;</button>
+  <div class="m-cat" id="mCat"></div><div class="m-q" id="mQ"></div>
+  <div class="m-hint" id="mHint">Deep dive — explained simply</div>
+  <div class="m-body" id="mBody"></div>
+</div></div>
+<script>
+const SNIPPETS={
+  log:{cat:"Storage engines · Basics",title:"The simplest database — an append-only log",
+   body:`<p>The most basic key-value store: append every write to the end of a file. To read a key, scan for the latest entry. Two functions, a few lines:</p>
+   <div class="codeblock"><div class="cb-head"><span class="cb-title">world's simplest DB</span></div><pre><code>db_set () { echo <span class="str">"$1,$2"</span> &gt;&gt; database; }
+db_get () { grep <span class="str">"^$1,"</span> database | tail -1 | cut -d, -f2; }</code></pre></div>
+   <ul>
+     <li><strong>Writes are blazing fast</strong> — appending to a file is sequential, the friendliest thing for a disk.</li>
+     <li><strong>Reads are terrible</strong> — O(n) scan of the whole file. You need an <strong>index</strong>.</li>
+   </ul>
+   <p>This append-only log idea is the seed of real engines. An index is an extra structure on the side that speeds reads but slows writes — a fundamental trade in every database.</p>`},
+
+  hashindex:{cat:"Storage engines · Hash index",title:"Hash indexes (Bitcask)",
+   body:`<p>Keep an in-memory hash map: <strong>key → byte offset</strong> in the log file. To read, look up the offset and jump straight there. This is how Bitcask (Riak's engine) works.</p>
+   <ul>
+     <li>Writes stay append-only and fast; the hash map updates in memory.</li>
+     <li>To stop the file growing forever, break it into <strong>segments</strong> and run <strong>compaction</strong> — throw away overwritten/deleted keys, keep only the latest value per key.</li>
+   </ul>
+   <div class="callout co-trap"><span class="co-tag">Two hard limits</span><p>(1) <strong>All keys must fit in RAM</strong> (the hash map is in memory). (2) <strong>Range queries are inefficient</strong> — a hash map has no order, so "all keys between A and C" means scanning everything.</p></div>`},
+
+  lsm:{cat:"Storage engines · LSM-trees",title:"SSTables & LSM-trees",
+   body:`<p>Fix the hash-index limits by keeping each segment <strong>sorted by key</strong> — a Sorted String Table (SSTable). That unlocks a lot:</p>
+   <ul>
+     <li>Merging segments is cheap — like the merge step of mergesort, sequential and streaming.</li>
+     <li>The in-memory index can be <strong>sparse</strong> (one key every few KB) — you scan a tiny range to find a key. Keys no longer all need to fit in RAM.</li>
+     <li>Range queries work, because data is ordered.</li>
+   </ul>
+   <p><strong>How writes work:</strong> incoming writes go to an in-memory sorted structure (a <strong>memtable</strong>, e.g. a red-black tree). When it gets big, flush it to disk as a new SSTable. Background <strong>compaction</strong> merges SSTables.</p>
+   <p>This whole scheme is the <strong>Log-Structured Merge-tree (LSM-tree)</strong> — behind LevelDB, RocksDB, Cassandra, HBase, and Lucene's indexes.</p>
+   <div class="callout co-note"><span class="co-tag">Bloom filters</span><p>Looking up a missing key would mean checking every SSTable. A <strong>Bloom filter</strong> (a compact probabilistic set) quickly answers "this key is definitely not here," skipping wasted disk reads.</p></div>`},
+
+  btree:{cat:"Storage engines · B-trees",title:"B-trees — the standard",
+   body:`<p>The most widely used index, in almost every relational database. Where LSM-trees break data into variable-size segments written sequentially, B-trees break the database into fixed-size <strong>pages</strong> (often 4 KB) and update them <strong>in place</strong>.</p>
+   <ul>
+     <li>Pages form a tree. Each page points to child pages covering key ranges; you follow pointers down to the leaf holding your key.</li>
+     <li>The <strong>branching factor</strong> is high (hundreds), so even huge datasets are only ~3–4 levels deep — very few disk seeks per lookup.</li>
+     <li>Updates overwrite a page in place. To survive a crash mid-write, B-trees keep a <strong>write-ahead log (WAL / redo log)</strong> — append every change there first, so the tree can be restored.</li>
+   </ul>`},
+
+  lsm_vs_btree:{cat:"Storage engines · Trade-offs",title:"LSM-tree vs B-tree — the real trade",
+   body:`<table class="cmp"><tr><th></th><th>LSM-tree</th><th>B-tree</th></tr>
+   <tr><td>Writes</td><td><span class="yes">Faster</span> — sequential, append-only</td><td>In-place page writes + WAL</td></tr>
+   <tr><td>Reads</td><td>May check several SSTables</td><td><span class="yes">Faster</span>, more predictable</td></tr>
+   <tr><td>Disk space</td><td>Better — compaction + compression</td><td>Fragmentation leaves gaps</td></tr>
+   <tr><td>Each key lives</td><td>In several places (until compacted)</td><td><span class="yes">In one place</span> — nice for locking/txns</td></tr>
+   <tr><td>Downside</td><td>Compaction can steal I/O at high write loads</td><td>Higher write amplification on random writes</td></tr></table>
+   <p><strong>Write amplification</strong> = one logical write causing several physical writes to disk. It matters for SSD lifespan and throughput. Rule of thumb: LSM for write-heavy workloads, B-tree for read-heavy/transactional ones — but both are excellent and the gap is workload-dependent.</p>`},
+
+  oltp_olap:{cat:"OLTP vs OLAP",title:"Transaction processing vs analytics",
+   body:`<p>Two completely different access patterns, which is why they use different storage:</p>
+   <table class="cmp"><tr><th></th><th>OLTP (transactions)</th><th>OLAP (analytics)</th></tr>
+   <tr><td>Reads</td><td>A few rows by key, per query</td><td>Aggregates over millions of rows</td></tr>
+   <tr><td>Writes</td><td>Low-latency, from user actions</td><td>Bulk load / event stream (ETL)</td></tr>
+   <tr><td>Who</td><td>End users, via the app</td><td>Analysts, dashboards, BI</td></tr>
+   <tr><td>Data size</td><td>GB–TB</td><td>TB–PB</td></tr></table>
+   <p>Analytics usually run on a separate <strong>data warehouse</strong> — a read-only copy loaded from OLTP systems via <strong>ETL</strong> (Extract, Transform, Load), so heavy analytic queries don't hurt the live app.</p>`},
+
+  star:{cat:"OLAP · Modelling",title:"Star & snowflake schemas",
+   body:`<p>Data warehouses usually use a <strong>star schema</strong>: one big central <strong>fact table</strong> (one row per event — a sale, a click) surrounded by smaller <strong>dimension tables</strong> (who, what, where, when, why) it references.</p>
+   <div class="diagram"><div class="flow">
+     <div class="node sky">dim_date</div><div class="node sky">dim_product</div>
+     <div class="node am">FACT: sales</div>
+     <div class="node sky">dim_store</div><div class="node sky">dim_customer</div>
+   </div><div class="dg-cap">Star schema — the fact table at the centre, dimensions as points</div></div>
+   <p>A <strong>snowflake schema</strong> further breaks dimensions into sub-dimensions (more normalized). Star is simpler and more common.</p>`},
+
+  column:{cat:"OLAP · Column storage",title:"Column-oriented storage",
+   body:`<p>Analytic queries touch a few columns but millions of rows. Row storage forces you to read every column of every row off disk — wasteful. <strong>Column-oriented storage</strong> stores all values of one column together, so you read only the columns the query needs.</p>
+   <ul>
+     <li><strong>Column compression</strong> — columns have low cardinality and lots of repetition, so they compress brilliantly (e.g. <strong>bitmap encoding</strong>). Less data off disk = faster.</li>
+     <li><strong>Sort order</strong> — sorting rows by a common filter column speeds queries and improves compression. You can even keep several sort orders on replicas.</li>
+     <li><strong>Writing</strong> is harder (can't just update one value) — solved with an LSM-style memtable that merges into the column files.</li>
+     <li><strong>Materialized views / data cubes</strong> precompute common aggregates so dashboards are instant.</li>
+   </ul>
+   <p>This powers columnar analytic stores: Parquet, Amazon Redshift, Vertica, ClickHouse, BigQuery.</p>`}
+};
+
+const DATA=[
+{num:"00",tab:"Why this matters",title:"Why you should care how storage works",
+ kicker:"You don't have to build a storage engine — but you do have to pick one, and tune it.",
+ body:`
+ <h3>The engineer's reason</h3>
+ <p>You won't write a storage engine from scratch. But you constantly <strong>choose</strong> one — and choosing well (and tuning it) means knowing roughly what it's doing under the hood. The biggest split: storage tuned for <strong>transactions</strong> (OLTP) vs storage tuned for <strong>analytics</strong> (OLAP). They look nothing alike inside.</p>
+ <div class="box-row">
+   <div class="mbox"><div class="mb-t">Transactions (OLTP)</div><div class="mb-d">LSM-trees or B-trees. Find a few rows fast by key.</div></div>
+   <div class="mbox"><div class="mb-t">Analytics (OLAP)</div><div class="mb-d">Column stores. Aggregate millions of rows over few columns.</div></div>
+ </div>
+ <div class="callout co-win"><span class="co-tag">The arc of the chapter</span><p>Start with the simplest possible store (a log), add an index, evolve to LSM-trees and B-trees for transactions, then switch worlds entirely to column storage for analytics.</p></div>`},
+
+{num:"01",tab:"Log → hash index",title:"From a log to a hash index",
+ kicker:"The simplest database is an append-only file. Everything grows from there.",
+ body:`
+ <h3>The core trade-off of all databases</h3>
+ <p>The simplest store appends every write to a log — fast writes, hopeless reads. Add an <strong>index</strong> and reads get fast, but every write now also updates the index, slowing writes. That tension never goes away:</p>
+ <div class="callout co-cost"><span class="co-tag">Remember this</span><p>An index speeds up reads but slows down writes. There is no free index. Choosing indexes well is choosing which reads to make fast at the cost of write speed.</p></div>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('log')"><span class="cc-ico">{ }</span><div><div class="cc-t">The simplest database</div><div class="cc-s">append-only log, 2 functions</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('hashindex')"><span class="cc-ico">{ }</span><div><div class="cc-t">Hash indexes (Bitcask)</div><div class="cc-s">key → byte offset in RAM</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <p>Hash indexes are great until you hit their two walls: <strong>all keys must fit in memory</strong>, and <strong>no efficient range queries</strong>. Fixing those gives us the two engine families that run the world.</p>`},
+
+{num:"02",tab:"LSM vs B-tree",title:"LSM-trees vs B-trees",
+ kicker:"The two storage engines behind almost every transactional database.",
+ body:`
+ <h3>LSM-trees — write-optimised</h3>
+ <p>Keep segments sorted (SSTables), buffer writes in a memtable, flush and compact in the background. Sequential writes, great compression, ordered data.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('lsm')"><span class="cc-ico">{ }</span><div><div class="cc-t">SSTables & LSM-trees</div><div class="cc-s">memtable, compaction, Bloom filters</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('btree')"><span class="cc-ico">{ }</span><div><div class="cc-t">B-trees</div><div class="cc-s">pages, in-place writes, WAL</div></div><span class="cc-go">view →</span></div>
+ </div>
+
+ <h3>B-trees — read-optimised, in place</h3>
+ <p>Fixed-size pages in a shallow tree, updated in place, protected by a write-ahead log. The default in relational databases. Predictable reads; each key lives in exactly one place (handy for locks and transactions).</p>
+
+ <h3>Pick by workload</h3>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('lsm_vs_btree')"><span class="cc-ico">{ }</span><div><div class="cc-t">The full trade-off table</div><div class="cc-s">writes, reads, space, amplification</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="widget">
+   <div class="w-tag">Try it</div>
+   <div class="w-title">Which engine for my workload?</div>
+   <label>What does your workload look like?</label>
+   <select id="engSel">
+     <option value="write">Write-heavy (lots of inserts/updates, ingest)</option>
+     <option value="read">Read-heavy with point lookups by key</option>
+     <option value="txn">Heavy transactions + locking</option>
+     <option value="analytics">Big aggregations over few columns</option>
+   </select>
+   <div id="engOut" style="margin-top:8px"></div>
+ </div>`},
+
+{num:"03",tab:"OLTP vs OLAP",title:"Transactions or analytics?",
+ kicker:"Two access patterns so different they need different databases entirely.",
+ body:`
+ <h3>The great divide</h3>
+ <p>Live app traffic (OLTP) reads a few rows by key, fast. Analytics (OLAP) scan millions of rows to compute aggregates. Running big analytic queries on your live OLTP database would slow down real users — so analytics moves to a separate <strong>data warehouse</strong>.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('oltp_olap')"><span class="cc-ico">{ }</span><div><div class="cc-t">OLTP vs OLAP, side by side</div><div class="cc-s">access patterns + ETL</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('star')"><span class="cc-ico">{ }</span><div><div class="cc-t">Star & snowflake schemas</div><div class="cc-s">fact + dimension tables</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="diagram"><div class="flow">
+   <div class="node sky">OLTP databases</div><span class="arrow">—ETL→</span>
+   <div class="node am">Data warehouse</div><span class="arrow">→</span>
+   <div class="node em">Analysts / BI</div>
+ </div><div class="dg-cap">ETL copies data out so heavy analytics never touch the live app</div></div>`},
+
+{num:"04",tab:"Column storage",title:"Column-oriented storage",
+ kicker:"The trick that makes analytic queries fly — store columns, not rows.",
+ body:`
+ <h3>Read only what you need</h3>
+ <p>An analytic query like "average sale price by month" needs 2 columns but every row. Row storage makes you read all columns of all rows. <strong>Column storage</strong> keeps each column together, so you read only the columns the query touches — and those columns compress beautifully.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('column')"><span class="cc-ico">{ }</span><div><div class="cc-t">Columns, compression, sort order</div><div class="cc-s">bitmap encoding, cubes, materialized views</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="callout co-win"><span class="co-tag">Why it's fast</span><p>Less data off disk (only needed columns) + heavy compression (repetitive column values) + precomputed aggregates (materialized views / data cubes) = analytic queries that scan billions of rows in seconds. This is Parquet, Redshift, ClickHouse, BigQuery.</p></div>
+
+ <h3>Self-check</h3>
+ <div id="quizMount"></div>`},
+
+{num:"05",tab:"Glossary",title:"Glossary — Chapter 3",
+ kicker:"Every key term. Define each plainly and you own the chapter.",
+ body:`
+ <h4>Foundations</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Storage engine</div><div class="vd">The part of a database that actually stores and retrieves data on disk.</div></div>
+   <div class="vocab"><div class="vt">Index</div><div class="vd">An extra structure that speeds reads at the cost of slower writes.</div></div>
+   <div class="vocab"><div class="vt">Append-only log</div><div class="vd">Writing every change to the end of a file — sequential, fast, durable.</div></div>
+   <div class="vocab"><div class="vt">Compaction</div><div class="vd">Merging segments and discarding overwritten/deleted keys to reclaim space.</div></div>
+ </div>
+ <h4>LSM-trees</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Hash index</div><div class="vd">In-memory map key→byte offset (Bitcask). Fast, but keys must fit in RAM.</div></div>
+   <div class="vocab"><div class="vt">SSTable</div><div class="vd">Sorted String Table — a segment file sorted by key. Enables cheap merges.</div></div>
+   <div class="vocab"><div class="vt">LSM-tree</div><div class="vd">Log-Structured Merge-tree — memtable → SSTables + compaction. Write-optimised.</div></div>
+   <div class="vocab"><div class="vt">Memtable</div><div class="vd">In-memory sorted buffer for recent writes, flushed to an SSTable when full.</div></div>
+   <div class="vocab"><div class="vt">Bloom filter</div><div class="vd">Compact probabilistic set; quickly says "key definitely not here."</div></div>
+ </div>
+ <h4>B-trees</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">B-tree</div><div class="vd">Fixed-size pages in a shallow tree, updated in place. The relational default.</div></div>
+   <div class="vocab"><div class="vt">Page</div><div class="vd">Fixed-size block (often 4 KB) — the unit B-trees read and write.</div></div>
+   <div class="vocab"><div class="vt">Write-ahead log (WAL)</div><div class="vd">Append changes before applying them, so a crash mid-write is recoverable.</div></div>
+   <div class="vocab"><div class="vt">Write amplification</div><div class="vd">One logical write causing several physical disk writes. Hurts SSDs and throughput.</div></div>
+ </div>
+ <h4>Analytics</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">OLTP</div><div class="vd">Online Transaction Processing — fast few-row reads/writes from app users.</div></div>
+   <div class="vocab"><div class="vt">OLAP</div><div class="vd">Online Analytical Processing — big aggregations for analysts.</div></div>
+   <div class="vocab"><div class="vt">Data warehouse</div><div class="vd">Separate read-only copy for analytics, loaded via ETL.</div></div>
+   <div class="vocab"><div class="vt">ETL</div><div class="vd">Extract, Transform, Load — moving data from OLTP into the warehouse.</div></div>
+   <div class="vocab"><div class="vt">Star schema</div><div class="vd">Central fact table (events) surrounded by dimension tables.</div></div>
+   <div class="vocab"><div class="vt">Column-oriented storage</div><div class="vd">Store each column together; read only needed columns; compress hard.</div></div>
+   <div class="vocab"><div class="vt">Materialized view / cube</div><div class="vd">Precomputed aggregates so dashboards return instantly.</div></div>
+ </div>`}
+];
+
+const QUIZ=[
+ {q:"Why are writes to an append-only log so fast?",
+  opts:["Disks love sequential writes; appending avoids random seeks","Logs are stored in RAM","It skips the index","Compression makes them small"],correct:0,
+  ex:"Appending is <strong>sequential</strong> I/O — the friendliest pattern for both spinning disks and SSDs, far faster than random in-place updates."},
+ {q:"What are the two hard limits of a simple hash index (Bitcask)?",
+  opts:["Slow writes and big files","All keys must fit in RAM, and range queries are inefficient","No durability and no compression","It can't store strings"],correct:1,
+  ex:"The hash map lives in memory (so keys must fit in RAM) and is unordered (so range scans require reading everything). SSTables fix both."},
+ {q:"You're ingesting a massive stream of writes. Which engine usually fits better?",
+  opts:["B-tree","LSM-tree","Neither","A hash index only"],correct:1,
+  ex:"<strong>LSM-trees</strong> turn writes into sequential SSTable flushes — great for write-heavy ingest. B-trees do in-place page writes plus a WAL."},
+ {q:"Why is column-oriented storage so fast for analytics?",
+  opts:["It stores fewer rows","It reads only the needed columns and compresses their repetitive values","It avoids disk entirely","It has no indexes"],correct:1,
+  ex:"Analytic queries touch few columns but many rows. Reading only those columns + heavy compression (e.g. bitmap encoding) means far less data off disk."}
+];
+
+function initExtra(){
+  const sel=document.getElementById('engSel');const out=document.getElementById('engOut');
+  if(!sel)return;
+  const REC={
+    write:["LSM-tree","Sequential SSTable flushes + compaction make writes cheap. Cassandra, RocksDB, HBase. Watch compaction I/O at extreme write rates.","co-win"],
+    read:["B-tree","In-place pages give predictable, fast point reads — the relational default (PostgreSQL, MySQL/InnoDB).","co-note"],
+    txn:["B-tree","Each key lives in exactly one place, which makes locking and transactional isolation cleaner. Classic OLTP choice.","co-note"],
+    analytics:["Column store","Not row storage at all — use a columnar warehouse (Redshift, ClickHouse, Parquet/BigQuery) to scan few columns over many rows.","co-win"]
+  };
+  const upd=()=>{const r=REC[sel.value];out.innerHTML=`<div class="callout ${r[2]}"><span class="co-tag">Recommended</span><p><strong>${r[0]}.</strong> ${r[1]}</p></div>`;};
+  sel.addEventListener('change',upd);upd();
+}
+
+
+const tabBar=document.getElementById('tabBar');
+const main=document.getElementById('main');
+DATA.forEach((s,i)=>{
+  const btn=document.createElement('button');
+  btn.className='tab-btn'+(i===0?' active':'');
+  btn.textContent=s.tab; btn.onclick=()=>showTab(i); tabBar.appendChild(btn);
+  const panel=document.createElement('section');
+  panel.className='tab-panel'+(i===0?' active':''); panel.id='panel-'+i;
+  panel.innerHTML=`<div class="stage"><div class="container"><div class="stage-header"><div class="stage-num-big">${s.num}</div><div><div class="stage-title">${s.title}</div><div class="stage-kicker">${s.kicker}</div></div></div><div class="body-wrap"><div class="spacer"></div><div class="prose">${s.body}</div></div></div></div>`;
+  main.appendChild(panel);
+});
+function showTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  window.scrollTo({top:document.querySelector('.tabs').offsetTop-60,behavior:'smooth'});
+}
+const overlay=document.getElementById('overlay');
+function openSnip(key){const s=SNIPPETS[key];if(!s)return;
+  document.getElementById('mCat').textContent=s.cat;
+  document.getElementById('mQ').textContent=s.title;
+  document.getElementById('mBody').innerHTML=s.body;
+  overlay.classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('closeBtn').onclick=closeModal;
+overlay.onclick=e=>{if(e.target===overlay)closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+// dropdown
+const drop=document.getElementById('chDrop');
+document.getElementById('chDropBtn').onclick=e=>{e.stopPropagation();drop.classList.toggle('open');};
+document.addEventListener('click',()=>drop.classList.remove('open'));
+// generic quiz mounter: window.QUIZ + #quizMount
+function mountQuiz(){
+  if(typeof QUIZ==='undefined')return;
+  const qm=document.getElementById('quizMount'); if(!qm)return;
+  QUIZ.forEach((item,qi)=>{
+    const box=document.createElement('div');box.className='quiz';
+    let html=`<div class="q">${qi+1}. ${item.q}</div>`;
+    item.opts.forEach((o,oi)=>{html+=`<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`;});
+    html+=`<div class="explain" id="ex-${qi}">${item.ex}</div>`;
+    box.innerHTML=html;qm.appendChild(box);
+  });
+  qm.addEventListener('click',e=>{
+    const b=e.target.closest('.opt');if(!b)return;
+    const box=b.closest('.quiz');if(box.dataset.done)return;box.dataset.done='1';
+    const qi=+b.dataset.q,oi=+b.dataset.o,correct=QUIZ[qi].correct;
+    box.querySelectorAll('.opt').forEach((opt,idx)=>{
+      if(idx===correct)opt.classList.add('correct');else if(idx===oi)opt.classList.add('wrong');
+      opt.style.cursor='default';});
+    document.getElementById('ex-'+qi).classList.add('show');
+  });
+}
+mountQuiz();
+if(typeof initExtra==='function'){try{initExtra();}catch(e){console.error(e);}}
+
+</script>
+</body>
+</html>

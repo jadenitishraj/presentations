@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDIA · 12 — The Future of Data Systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#09090e;--ink:#f4f1ea;--ink-dim:#aba7b9;--ink-faint:#5f5a72;
+  --sky:#0ea5e9;--emerald:#10b981;--indigo:#6366f1;--violet:#8b5cf6;--amber:#f59e0b;--rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.03);--card-border:rgba(255,255,255,.08);--panel:rgba(255,255,255,.02);--accent:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter Tight',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden;background-color:#08080c;
+  background-image:radial-gradient(circle at 15% 50%, rgba(139,92,246,.08), transparent 25%),radial-gradient(circle at 85% 30%, rgba(99,102,241,.08), transparent 25%);background-attachment:fixed;}
+.container{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--ink-dim)}
+
+/* ===== top site nav ===== */
+.sitenav{position:sticky;top:0;z-index:120;background:rgba(8,8,12,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--card-border)}
+.sitenav-inner{max-width:1180px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:18px}
+.brand{font-family:'Fraunces',serif;font-weight:800;font-size:16px;letter-spacing:-.02em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand em{font-style:italic;font-weight:300;color:var(--violet)}
+.nav-spacer{flex:1}
+.nav-prevnext{display:flex;gap:8px}
+.nav-prevnext a{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--card-border);border-radius:5px;color:var(--ink-dim);text-decoration:none;transition:all .18s}
+.nav-prevnext a:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.nav-prevnext a.disabled{opacity:.3;pointer-events:none}
+.dropdown{position:relative}
+.dropbtn{font:600 12px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;color:#e7e1ff;cursor:pointer;display:flex;align-items:center;gap:8px}
+.dropbtn .chev{transition:transform .2s}
+.dropdown.open .chev{transform:rotate(180deg)}
+.dropmenu{position:absolute;top:calc(100% + 8px);left:0;min-width:340px;max-height:70vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--card-border));border-radius:10px;padding:8px;box-shadow:0 24px 70px rgba(0,0,0,.6);display:none;z-index:130}
+.dropdown.open .dropmenu{display:block;animation:fadeIn .2s ease}
+.dropmenu a{display:flex;gap:12px;align-items:baseline;padding:10px 12px;border-radius:7px;text-decoration:none;color:var(--ink-dim);transition:all .15s}
+.dropmenu a:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.dropmenu a.cur{background:color-mix(in srgb,var(--accent) 16%,transparent);color:#fff}
+.dropmenu a .dn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--violet);flex:0 0 26px}
+.dropmenu a .dt{font-size:14.5px;font-weight:400;line-height:1.3}
+.dropmenu .part{font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:12px 12px 6px}
+
+/* hero */
+.hero{min-height:86vh;display:flex;flex-direction:column;justify-content:center;padding:70px 0 60px;position:relative}
+.hero .stage-num{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:14px;color:var(--ink-faint);margin-bottom:24px}
+.hero h1{font-size:clamp(42px,7.6vw,88px);margin-bottom:28px;background:linear-gradient(135deg,var(--violet),var(--indigo),var(--sky));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{font-size:clamp(18px,2.2vw,22px);max-width:880px;color:var(--ink-dim);margin-bottom:48px;font-weight:300}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1040px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:32px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+
+/* tabs */
+.tabs{position:sticky;top:57px;z-index:50;background:rgba(8,8,12,.91);backdrop-filter:blur(14px);border-bottom:1px solid var(--card-border);padding:14px 0}
+.tabs-inner{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tab-btn{font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:4px;color:var(--ink-dim);cursor:pointer;transition:all .2s}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* stage */
+.stage{padding:64px 0 84px;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:36px;align-items:start}
+.stage-num-big{font-family:'Fraunces',serif;font-style:italic;font-size:60px;line-height:1;color:var(--accent);font-weight:300}
+.stage-title{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.03em;line-height:1.05;margin-bottom:12px}
+.stage-kicker{font-size:17px;color:var(--ink-dim);font-weight:300;max-width:870px}
+
+/* body */
+.body-wrap{display:grid;grid-template-columns:80px 1fr;gap:24px}
+.prose{max-width:880px}
+.prose h3{font-family:'Fraunces',serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:34px 0 14px;color:var(--ink)}
+.prose h3:first-child{margin-top:0}
+.prose h4{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:28px 0 12px}
+.prose p{font-size:16.5px;color:var(--ink-dim);font-weight:300;line-height:1.72;margin-bottom:15px}
+.prose p strong{color:var(--ink);font-weight:600}
+.prose ul{list-style:none;margin:6px 0 18px}
+.prose li{font-size:16px;color:var(--ink-dim);font-weight:300;line-height:1.65;padding-left:22px;position:relative;margin-bottom:9px}
+.prose li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.prose li strong{color:var(--ink);font-weight:600}
+code.inl{font-family:'JetBrains Mono',monospace;font-size:13.5px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22);border-radius:4px;padding:2px 6px;color:#d6ccff}
+
+/* callouts */
+.callout{border-radius:8px;padding:18px 20px;margin:22px 0;border:1px solid;backdrop-filter:blur(8px);font-size:15.5px;font-weight:300;line-height:1.65}
+.callout .co-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:block}
+.callout p{margin:0 0 8px;font-size:15.5px;color:var(--ink-dim)}
+.callout p:last-child{margin-bottom:0}
+.callout strong{color:var(--ink);font-weight:600}
+.co-trap{background:rgba(244,63,94,.07);border-color:rgba(244,63,94,.3)}.co-trap .co-tag{color:var(--rose)}
+.co-note{background:rgba(14,165,233,.06);border-color:rgba(14,165,233,.28)}.co-note .co-tag{color:var(--sky)}
+.co-cost{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3)}.co-cost .co-tag{color:var(--amber)}
+.co-win{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.28)}.co-win .co-tag{color:var(--emerald)}
+
+/* vocab */
+.vocab-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0 8px}
+.vocab{background:var(--card-bg);border:1px solid var(--card-border);border-left:3px solid var(--accent);border-radius:6px;padding:16px 18px}
+.vocab .vt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;color:#d6ccff;margin-bottom:6px}
+.vocab .vd{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.55}
+
+/* concept cards -> modal */
+.code-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+.code-card{display:flex;align-items:center;gap:13px;background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-left:3px solid var(--sky);border-radius:6px;padding:16px 18px;cursor:pointer;transition:all .18s}
+.code-card:hover{background:rgba(255,255,255,.05);transform:translateY(-2px);border-left-color:var(--violet)}
+.code-card .cc-ico{font:700 14px 'JetBrains Mono',monospace;color:var(--sky);flex:0 0 auto}
+.code-card .cc-t{font-size:15px;color:var(--ink);font-weight:500;line-height:1.3}
+.code-card .cc-s{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+.code-card .cc-go{margin-left:auto;font:700 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);flex:0 0 auto}
+.code-card:hover .cc-go{color:var(--violet)}
+
+/* code block */
+.codeblock{background:#0c0c13;border:1px solid var(--card-border);border-radius:8px;margin:18px 0;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--card-border);background:rgba(255,255,255,.015)}
+.codeblock .cb-title{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.codeblock pre{margin:0;padding:16px 18px;overflow-x:auto}
+.codeblock code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cfd3e0;white-space:pre}
+.cmt{color:#6a6a85}.kw{color:#c4b5fd}.str{color:#7fd4a0}.flg{color:#7cc5f0}
+
+/* table */
+.cmp{width:100%;border-collapse:collapse;margin:20px 0;font-size:14.5px}
+.cmp th,.cmp td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--card-border)}
+.cmp th{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.cmp td{color:var(--ink-dim);font-weight:300}
+.cmp td:first-child{color:var(--ink);font-weight:500}
+.cmp tr:hover td{background:rgba(255,255,255,.02)}
+.yes{color:var(--emerald);font-weight:600}.no{color:var(--rose);font-weight:600}
+
+/* diagram */
+.diagram{background:rgba(13,13,20,.6);border:1px solid var(--card-border);border-radius:10px;padding:26px 22px;margin:22px 0}
+.diagram .dg-cap{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center;margin-top:16px}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.node{background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;padding:11px 15px;font:600 13px 'Inter Tight',sans-serif;color:var(--ink);text-align:center;min-width:96px}
+.node.sky{background:rgba(14,165,233,.13);border-color:rgba(14,165,233,.34)}
+.node.em{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.32)}
+.node.am{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32)}
+.node.ro{background:rgba(244,63,94,.13);border-color:rgba(244,63,94,.36)}
+.arrow{color:var(--ink-faint);font-size:18px}
+.box-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.mbox{flex:1;min-width:150px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.mbox .mb-t{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.mbox .mb-d{font-size:13px;color:var(--ink-dim);font-weight:300}
+
+/* quiz */
+.quiz{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:22px 24px;margin:18px 0}
+.quiz .q{font-size:16.5px;color:var(--ink);font-weight:500;margin-bottom:14px}
+.quiz .opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:12px 16px;margin-bottom:9px;color:var(--ink-dim);font-size:15px;cursor:pointer;transition:all .15s;font-family:'Inter Tight',sans-serif}
+.quiz .opt:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.quiz .opt.correct{border-color:var(--emerald);background:rgba(16,185,129,.12);color:var(--ink)}
+.quiz .opt.wrong{border-color:var(--rose);background:rgba(244,63,94,.1)}
+.quiz .explain{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.6;margin-top:10px;padding-top:12px;border-top:1px solid var(--card-border);display:none}
+.quiz .explain.show{display:block}.quiz .explain strong{color:var(--ink)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,4,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex;animation:fadeIn .25s ease}
+.modal{max-width:820px;width:100%;max-height:88vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));border-radius:10px;padding:34px 36px 30px;position:relative;box-shadow:0 30px 90px rgba(0,0,0,.65);}
+.modal .m-cat{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modal .m-q{font-family:'Fraunces',serif;font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin-bottom:6px}
+.modal .m-hint{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px}
+.modal .m-body{font-size:15.5px;color:var(--ink-dim);font-weight:300;line-height:1.68}
+.modal .m-body p{margin-bottom:13px}.modal .m-body strong{color:var(--ink);font-weight:600}
+.modal .m-body ul{list-style:none;margin:6px 0 14px}
+.modal .m-body li{padding-left:22px;position:relative;margin-bottom:8px}
+.modal .m-body li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.modal-close:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,transparent)}
+
+.foot{padding:50px 0 80px;text-align:center;border-top:1px solid var(--card-border);color:var(--ink-faint);font-size:14px}
+
+@media(max-width:900px){
+  .stats,.vocab-grid,.code-cards{grid-template-columns:1fr}
+  .stage-header,.body-wrap{grid-template-columns:1fr}
+  .dropmenu{min-width:280px}
+  .nav-prevnext{display:none}
+  .modal{padding:28px 22px 24px}
+  .cmp{font-size:13px}.cmp th,.cmp td{padding:10px 10px}
+  .tabs{top:55px}
+}
+
+/* ===== interactive widgets (shared) ===== */
+.widget{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:24px;margin:24px 0}
+.widget .w-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);margin-bottom:6px}
+.widget .w-title{font-family:'Fraunces',serif;font-weight:800;font-size:20px;letter-spacing:-.02em;margin-bottom:16px;color:var(--ink)}
+.widget label{display:block;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.widget input[type=range]{width:100%;accent-color:var(--violet);margin-bottom:6px}
+.widget .w-val{font-family:'JetBrains Mono',monospace;color:#d6ccff;font-weight:700}
+.widget select{background:#11111a;color:var(--ink);border:1px solid var(--card-border);border-radius:6px;padding:9px 12px;font-family:'Inter Tight',sans-serif;font-size:14px;margin-bottom:10px}
+.w-out{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.w-out .wo{background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.w-out .wo .wo-n{font-family:'Fraunces',serif;font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ink)}
+.w-out .wo .wo-l{font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
+.w-btn{display:inline-block;width:auto;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:8px 16px;color:var(--ink-dim);font:600 12px 'JetBrains Mono',monospace;cursor:pointer;transition:all .15s;margin-top:8px}
+.w-btn:hover{background:rgba(255,255,255,.07);color:var(--ink);border-color:var(--accent)}
+.pbars{display:flex;align-items:flex-end;gap:2px;height:120px;margin:10px 0 4px}
+.pbar{flex:1;background:rgba(139,92,246,.25);border-radius:2px 2px 0 0;transition:background .2s}
+.pbar.p50{background:var(--emerald)}.pbar.p95{background:var(--amber)}.pbar.p99{background:var(--rose)}
+.pleg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font:600 11px 'JetBrains Mono',monospace}
+.pleg span{display:flex;align-items:center;gap:6px;color:var(--ink-dim)}
+.pleg i{width:11px;height:11px;border-radius:2px;display:inline-block}
+@media(max-width:900px){.w-out{grid-template-columns:1fr}}
+</style>
+</head>
+<body style="--accent:var(--violet)">
+<nav class="sitenav">
+  <div class="sitenav-inner">
+    <a class="brand" href="index.html">DDIA <em>interactive</em></a>
+    <div class="dropdown" id="chDrop">
+      <button class="dropbtn" id="chDropBtn">Chapters <span class="chev">▾</span></button>
+      <div class="dropmenu"><div class="part">Part I · Foundations of Data Systems</div><a class="" href="chapter01.html"><span class="dn">01</span><span class="dt">Reliable, Scalable & Maintainable</span></a><a class="" href="chapter02.html"><span class="dn">02</span><span class="dt">Data Models & Query Languages</span></a><a class="" href="chapter03.html"><span class="dn">03</span><span class="dt">Storage & Retrieval</span></a><a class="" href="chapter04.html"><span class="dn">04</span><span class="dt">Encoding & Evolution</span></a><div class="part">Part II · Distributed Data</div><a class="" href="chapter05.html"><span class="dn">05</span><span class="dt">Replication</span></a><a class="" href="chapter06.html"><span class="dn">06</span><span class="dt">Partitioning</span></a><a class="" href="chapter07.html"><span class="dn">07</span><span class="dt">Transactions</span></a><a class="" href="chapter08.html"><span class="dn">08</span><span class="dt">The Trouble with Distributed Systems</span></a><a class="" href="chapter09.html"><span class="dn">09</span><span class="dt">Consistency & Consensus</span></a><div class="part">Part III · Derived Data</div><a class="" href="chapter10.html"><span class="dn">10</span><span class="dt">Batch Processing</span></a><a class="" href="chapter11.html"><span class="dn">11</span><span class="dt">Stream Processing</span></a><a class="cur" href="chapter12.html"><span class="dn">12</span><span class="dt">The Future of Data Systems</span></a></div>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-prevnext"><a href="glossary.html">Dictionary</a><a href="chapter11.html">← Prev</a><a class="disabled">Next →</a></div>
+  </div>
+</nav>
+<section class="hero"><div class="container">
+  <div class="stage-num">DDIA · Chapter 12 · Part III — Derived Data</div>
+  <h1 class="display">The <em>Future</em> of<br>Data Systems</h1>
+  <p class="sub">Kleppmann's closing argument. No single tool does it all, so we integrate many — wiring them together with logs, unbundling the database, aiming for end-to-end correctness, and facing the ethics of what we build.</p>
+  <div class="stats"><div class="stat"><div class="num">4</div><div class="label">big themes</div></div><div class="stat"><div class="num">6</div><div class="label">sections</div></div><div class="stat"><div class="num">1</div><div class="label">live widget</div></div><div class="stat"><div class="num">click</div><div class="label">for deep dives</div></div></div>
+</div></section>
+<nav class="tabs"><div class="container"><div class="tabs-inner" id="tabBar"></div></div></nav>
+<main id="main"></main>
+<div class="foot container">The future is built from derived data: integrate specialised tools through logs, unbundle the database into composable parts, enforce correctness end-to-end, and take responsibility for what data does to people.</div>
+<div class="modal-overlay" id="overlay"><div class="modal" id="modal">
+  <button class="modal-close" id="closeBtn" aria-label="Close">&times;</button>
+  <div class="m-cat" id="mCat"></div><div class="m-q" id="mQ"></div>
+  <div class="m-hint" id="mHint">Deep dive — explained simply</div>
+  <div class="m-body" id="mBody"></div>
+</div></div>
+<script>
+const SNIPPETS={
+  derived:{cat:"Data integration · Foundations",title:"No single tool does everything",
+   body:`<p>By now the book's lesson is clear: there is no one database, index, or engine that's right for every access pattern. Real systems combine many specialised tools — an OLTP database, a search index, a cache, a warehouse, a stream processor — each good at one thing.</p>
+   <p>The hard, valuable work is <strong>integrating</strong> them so they all reflect the same underlying data. The key concept is <strong>derived data</strong>: one system is the source of truth, and the others are <em>derived</em> from it (a search index derived from the database, a cache derived from query results).</p>
+   <div class="callout co-note"><span class="co-tag">The shift in thinking</span><p>Stop asking "which one database?" Start asking "how does data <strong>flow</strong> between my tools, and which is the source of truth?" The whole organisation becomes one big, assembled dataflow.</p></div>`},
+
+  txn_vs_derived:{cat:"Data integration · Two approaches",title:"Distributed transactions vs derived data",
+   body:`<p>Two ways to keep different systems consistent with each other:</p>
+   <table class="cmp"><tr><th></th><th>Distributed transactions (2PC/XA)</th><th>Log-based derived data</th></tr>
+   <tr><td>Mechanism</td><td>Locks + atomic commit across systems</td><td>Ordered log + deterministic, idempotent consumers</td></tr>
+   <tr><td>Consistency</td><td>Linearizable, synchronous</td><td>Asynchronous, eventually consistent</td></tr>
+   <tr><td>Coupling</td><td>Tight — all participants must be up</td><td>Loose — consumers catch up independently</td></tr>
+   <tr><td>At scale</td><td>Fragile, slow, poor cross-system support</td><td>Robust, scalable, fault-tolerant</td></tr></table>
+   <p>Kleppmann's argument: since cross-system distributed transactions remain fragile and rarely interoperate well, <strong>log-based derived data is the more promising path</strong> for integrating heterogeneous systems. Order writes through a log; let each system derive its own state from it.</p>`},
+
+  lambda:{cat:"Data integration · Batch + stream",title:"Lambda architecture, and unifying it",
+   body:`<p>The <strong>lambda architecture</strong> tried to get the best of both worlds: run a <strong>batch</strong> system (accurate, reprocesses all history) alongside a <strong>stream</strong> system (fast, approximate), and merge their outputs at read time.</p>
+   <ul>
+     <li><span class="no">Problem:</span> you maintain the <em>same logic twice</em> in two different frameworks, and merging the two views is complex.</li>
+     <li><span class="yes">Better:</span> <strong>unify batch and stream</strong>. Modern engines (Spark, Flink, Beam) treat batch as a bounded special case of streaming. Keep a replayable log, and reprocess history through the <em>same</em> streaming engine when you need to.</li>
+   </ul>
+   <div class="callout co-win"><span class="co-tag">The modern view</span><p>A replayable log + one engine that handles both live and historical data removes the need for two parallel systems. Reprocessing becomes "replay the log from offset zero."</p></div>`},
+
+  unbundle:{cat:"Unbundling · The idea",title:"Unbundling the database",
+   body:`<p>A database quietly bundles several jobs: storage, secondary indexes, materialized views, a replication log, and caching. In a data-integration architecture, these get <strong>unbundled</strong> — provided by separate tools and composed via a log.</p>
+   <ul>
+     <li><strong>Creating an index</strong> is really a stream processor consuming a changelog and writing a derived structure — the same pattern whether it's inside one database or spread across Kafka + Elasticsearch.</li>
+     <li>The <strong>log becomes the integration point</strong> — the equivalent of a database's internal replication stream, but at organisation scale.</li>
+   </ul>
+   <p>Two complementary directions: <strong>federation</strong> unifies <em>reads</em> across systems (one query interface over many stores, e.g. Presto); <strong>unbundling</strong> unifies <em>writes</em> (keep all derived systems in sync via the log).</p>`},
+
+  insideout:{cat:"Unbundling · Dataflow apps",title:"The database inside-out & dataflow",
+   body:`<p>Kleppmann's "<strong>database inside-out</strong>": take the components a database hides internally and lift them into the application. The <strong>log/stream is the source of truth</strong>, and materialized views are maintained by stream processors that subscribe to changes.</p>
+   <p><strong>Spreadsheet analogy:</strong> in a spreadsheet, change one cell and every dependent cell updates automatically. Imagine that for your whole application — derived data that recomputes itself whenever its inputs change.</p>
+   <ul>
+     <li>Instead of services <em>querying</em> each other on demand, they <strong>subscribe</strong> to streams of changes and maintain their own up-to-date view.</li>
+     <li>This makes precomputed, always-fresh state the norm rather than the exception.</li>
+   </ul>`},
+
+  readwrite:{cat:"Unbundling · Read vs write path",title:"The read path and the write path",
+   body:`<p>Every piece of derived data sits somewhere on a spectrum between two extremes:</p>
+   <ul>
+     <li><strong>Write path</strong> — do work <em>eagerly</em>, when data is written (precompute a materialized view, update the index). More write work, but reads are instant.</li>
+     <li><strong>Read path</strong> — do work <em>lazily</em>, when data is queried. Cheap writes, but each read recomputes.</li>
+   </ul>
+   <p>A cache or materialized view simply <strong>shifts work from the read path to the write path</strong>. You can push that boundary as far as you like — even all the way to the user's device, so a change on the server is <strong>pushed</strong> to the screen in real time instead of polled.</p>
+   <div class="diagram"><div class="flow">
+     <div class="node sky">Write (eager)</div><span class="arrow">←  materialized view shifts work  →</span>
+     <div class="node am">Read (lazy)</div>
+   </div><div class="dg-cap">Caches and views move computation from read time to write time</div></div>`},
+
+  endtoend:{cat:"Correctness · End-to-end",title:"The end-to-end argument",
+   body:`<p>Lower layers offer guarantees — TCP checksums, a broker's "exactly-once" delivery — but they're <strong>not enough on their own</strong>. The classic <strong>end-to-end argument</strong> says some correctness properties can only be enforced at the very endpoints of the system.</p>
+   <p><strong>Example — deduplication.</strong> A network retry can cause a payment to be submitted twice. No amount of TCP reliability prevents it. The fix is end-to-end: attach a <strong>unique operation ID</strong> to the request, and have the final system ignore duplicates. That's how "exactly-once" is really achieved — through <strong>idempotence</strong>, not magic.</p>
+   <div class="callout co-note"><span class="co-tag">Lesson</span><p>Don't assume lower layers make you correct. Give operations unique IDs and make their effects idempotent, so retries anywhere in the stack are harmless.</p></div>`},
+
+  integrity:{cat:"Correctness · Integrity vs timeliness",title:"Integrity matters more than timeliness",
+   body:`<p>Split "consistency" into two very different things:</p>
+   <ul>
+     <li><strong>Timeliness</strong> — users see the latest, consistent state (no stale reads). Violations are temporary and self-correcting.</li>
+     <li><strong>Integrity</strong> — no corruption, no loss, no contradictions. Violations are permanent and catastrophic.</li>
+   </ul>
+   <div class="callout co-win"><span class="co-tag">Key insight</span><p><strong>Integrity is far more important than timeliness.</strong> A briefly stale balance is annoying; a permanently wrong one is a disaster. Log-based, idempotent, deterministic dataflow preserves <em>integrity</em> without needing synchronous coordination — letting you relax timeliness for huge gains in performance and fault tolerance.</p></div>
+   <p>This enables <strong>coordination-avoiding data systems</strong>: keep correctness (integrity) while dropping linearizable coordination — so they run fast and stay available across regions and partitions.</p>`},
+
+  trust:{cat:"Correctness · Trust but verify",title:"Trust, but verify",
+   body:`<p>We tend to assume storage and software are reliable. But disks corrupt data, bugs slip through, and "durable" isn't absolute. The mature stance is to <strong>not blindly trust</strong> any single component.</p>
+   <ul>
+     <li>Build systems that <strong>audit themselves</strong> — continuously check integrity rather than assuming it.</li>
+     <li>Immutable event logs help: you can re-derive state and verify it matches, and even add cryptographic checks so corruption or tampering is detectable.</li>
+   </ul>
+   <p>Treat verification as a first-class feature, not an afterthought. A system that can prove its own data is intact is far more trustworthy than one that merely hopes so.</p>`},
+
+  ethics:{cat:"Doing the right thing",title:"The ethics of building data systems",
+   body:`<p>Kleppmann ends not with technology but with responsibility. The systems in this book give enormous power over people, and that power can harm:</p>
+   <ul>
+     <li><strong>Predictive analytics</strong> drives decisions on credit, jobs, insurance, and policing. If the training data encodes <strong>bias and discrimination</strong>, the system launders prejudice into "objective" math — and <strong>feedback loops</strong> make it self-reinforcing.</li>
+     <li><strong>Privacy and surveillance</strong> — mass data collection happens with consent that is often illusory. It creates a deep <strong>power asymmetry</strong> between those who hold data and those it describes.</li>
+     <li><strong>Data as a hazardous asset</strong> — "data is the new oil," but like oil it pollutes and leaks. Hoarded personal data is a <em>liability</em>, not just an asset.</li>
+   </ul>
+   <div class="callout co-trap"><span class="co-tag">The challenge to you</span><p>Engineers can't outsource ethics to "the business." We choose what to build and what to collect. Treat data about people with respect: collect less, be transparent, allow deletion, and refuse to build the genuinely harmful.</p></div>`}
+};
+
+const DATA=[
+{num:"00",tab:"Closing argument",title:"The future is built from derived data",
+ kicker:"The book's finale: no single tool wins, so the real skill is integrating many — correctly, and responsibly.",
+ body:`
+ <h3>Where everything has been heading</h3>
+ <p>Every chapter showed tools that are great at one job and poor at others. The conclusion isn't "pick the perfect database" — it's that you'll always combine several, and your job is to make them work together as one coherent system. This final chapter sketches how.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('derived')"><span class="cc-ico">{ }</span><div><div class="cc-t">No single tool does everything</div><div class="cc-s">derived data + source of truth</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="box-row">
+   <div class="mbox"><div class="mb-t">Data integration</div><div class="mb-d">Wire tools together with logs.</div></div>
+   <div class="mbox"><div class="mb-t">Unbundling</div><div class="mb-d">The database, taken apart and recomposed.</div></div>
+   <div class="mbox"><div class="mb-t">Correctness</div><div class="mb-d">Integrity, end-to-end.</div></div>
+   <div class="mbox"><div class="mb-t">Ethics</div><div class="mb-d">Doing the right thing with data.</div></div>
+ </div>
+ <div class="callout co-win"><span class="co-tag">Chapter in one line</span><p>Integrate specialised tools through logs, unbundle the database into composable parts, enforce correctness end-to-end, and take responsibility for what data does to people.</p></div>`},
+
+{num:"01",tab:"Data integration",title:"Data integration",
+ kicker:"Keeping many specialised systems in sync — and why logs beat distributed transactions for it.",
+ body:`
+ <h3>Two ways to stay consistent</h3>
+ <p>You can bind systems together with distributed transactions (synchronous, tightly coupled, fragile at scale) or let each <strong>derive</strong> its state from an ordered <strong>log</strong> (asynchronous, loosely coupled, robust). The book argues firmly for the log-based path.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('txn_vs_derived')"><span class="cc-ico">{ }</span><div><div class="cc-t">Transactions vs derived data</div><div class="cc-s">why logs win at scale</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('lambda')"><span class="cc-ico">{ }</span><div><div class="cc-t">Lambda → unifying batch & stream</div><div class="cc-s">one engine, replayable log</div></div><span class="cc-go">view →</span></div>
+ </div>
+
+ <div class="widget">
+   <div class="w-tag">Try it</div>
+   <div class="w-title">How should these systems stay in sync?</div>
+   <label>What's your situation?</label>
+   <select id="syncSel">
+     <option value="index">Keep a search index in sync with my database</option>
+     <option value="atomic">Two systems must commit atomically, right now</option>
+     <option value="unique">Enforce a uniqueness constraint at scale</option>
+     <option value="region">Multi-region, can't afford coordination latency</option>
+   </select>
+   <div id="syncOut" style="margin-top:8px"></div>
+ </div>`},
+
+{num:"02",tab:"Unbundling the DB",title:"Unbundling the database",
+ kicker:"A database is several tools in a trench coat. Take them apart and recompose them around a log.",
+ body:`
+ <h3>The database, disassembled</h3>
+ <p>Storage, indexes, materialized views, replication, caching — a database bundles them. Unbundling provides each from a separate tool, composed via the log. Building an index becomes "a stream processor consuming a changelog."</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('unbundle')"><span class="cc-ico">{ }</span><div><div class="cc-t">Unbundling the database</div><div class="cc-s">log as integration point; federation</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('insideout')"><span class="cc-ico">{ }</span><div><div class="cc-t">Database inside-out & dataflow</div><div class="cc-s">the spreadsheet analogy</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('readwrite')"><span class="cc-ico">{ }</span><div><div class="cc-t">Read path vs write path</div><div class="cc-s">where you do the work</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="callout co-note"><span class="co-tag">The mental model</span><p>Think of your <em>whole organisation</em> as one giant database being assembled from parts, with a log playing the role its internal replication stream plays inside a single database.</p></div>`},
+
+{num:"03",tab:"Aiming for correctness",title:"Aiming for correctness",
+ kicker:"End-to-end guarantees, integrity over timeliness, and not blindly trusting your own stack.",
+ body:`
+ <h3>Correctness lives at the endpoints</h3>
+ <p>Lower layers help but can't make you correct. Use unique operation IDs and idempotence so retries are harmless — that's what "exactly-once" really means.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('endtoend')"><span class="cc-ico">{ }</span><div><div class="cc-t">The end-to-end argument</div><div class="cc-s">idempotence, operation IDs</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('integrity')"><span class="cc-ico">{ }</span><div><div class="cc-t">Integrity vs timeliness</div><div class="cc-s">coordination-avoiding systems</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('trust')"><span class="cc-ico">{ }</span><div><div class="cc-t">Trust, but verify</div><div class="cc-s">self-auditing systems</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="callout co-win"><span class="co-tag">The big reframe</span><p>Separate <strong>integrity</strong> (no corruption — non-negotiable) from <strong>timeliness</strong> (no staleness — nice to have). Log-based dataflow keeps integrity without synchronous coordination, so you can be fast, available, <em>and</em> correct.</p></div>`},
+
+{num:"04",tab:"Doing the right thing",title:"Doing the right thing",
+ kicker:"The book ends on ethics — because these systems hold real power over real people.",
+ body:`
+ <h3>Power, and responsibility</h3>
+ <p>The same techniques that make systems scalable also make surveillance, discrimination, and manipulation scalable. Kleppmann closes by insisting engineers own the consequences of what they build.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('ethics')"><span class="cc-ico">{ }</span><div><div class="cc-t">The ethics of data systems</div><div class="cc-s">bias, surveillance, data as liability</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <ul>
+   <li><strong>Bias & feedback loops</strong> — models trained on biased data entrench that bias and amplify it over time.</li>
+   <li><strong>Privacy & power</strong> — mass collection with hollow consent creates lopsided power between data holders and data subjects.</li>
+   <li><strong>Data as liability</strong> — hoarded personal data leaks and pollutes; collecting less is often the responsible choice.</li>
+ </ul>
+ <div class="callout co-trap"><span class="co-tag">The closing charge</span><p>We decide what gets built and what gets collected. Treat people's data with respect — minimise it, be transparent, allow deletion, and refuse the genuinely harmful. That's the real "future of data systems."</p></div>
+
+ <h3>Self-check — the whole book</h3>
+ <div id="quizMount"></div>`},
+
+{num:"05",tab:"Glossary",title:"Glossary — Chapter 12",
+ kicker:"Every key term. Define each plainly and you've finished the book.",
+ body:`
+ <h4>Data integration</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Derived data</div><div class="vd">Data computed from a source of truth (an index, cache, or view derived from a database).</div></div>
+   <div class="vocab"><div class="vt">Source of truth (system of record)</div><div class="vd">The authoritative copy; everything else is derived from it.</div></div>
+   <div class="vocab"><div class="vt">Data integration</div><div class="vd">Keeping many specialised systems consistent with each other.</div></div>
+   <div class="vocab"><div class="vt">Lambda architecture</div><div class="vd">Running batch + stream systems in parallel and merging their outputs.</div></div>
+   <div class="vocab"><div class="vt">Unifying batch & stream</div><div class="vd">One engine + replayable log handles both live and historical data.</div></div>
+ </div>
+ <h4>Unbundling</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Unbundling the database</div><div class="vd">Providing storage, indexes, views, and replication as separate tools joined by a log.</div></div>
+   <div class="vocab"><div class="vt">Federation</div><div class="vd">Unifying reads — one query interface over many underlying stores.</div></div>
+   <div class="vocab"><div class="vt">Database inside-out</div><div class="vd">Lifting a database's internal parts into the app; the log is the source of truth.</div></div>
+   <div class="vocab"><div class="vt">Write path / read path</div><div class="vd">Doing derived work eagerly (on write) vs lazily (on read).</div></div>
+   <div class="vocab"><div class="vt">Materialized view</div><div class="vd">Precomputed result maintained on the write path so reads are instant.</div></div>
+ </div>
+ <h4>Correctness</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">End-to-end argument</div><div class="vd">Some correctness can only be enforced at the endpoints, not by lower layers.</div></div>
+   <div class="vocab"><div class="vt">Idempotence</div><div class="vd">An operation safe to apply repeatedly — how "exactly-once" is really achieved.</div></div>
+   <div class="vocab"><div class="vt">Timeliness</div><div class="vd">Seeing up-to-date state; violations are temporary and self-correcting.</div></div>
+   <div class="vocab"><div class="vt">Integrity</div><div class="vd">No corruption or loss; violations are permanent — the property that matters most.</div></div>
+   <div class="vocab"><div class="vt">Coordination-avoiding</div><div class="vd">Keeping integrity without linearizable coordination — fast and available.</div></div>
+ </div>
+ <h4>Ethics</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Predictive analytics</div><div class="vd">Using data to make decisions about people — credit, jobs, policing.</div></div>
+   <div class="vocab"><div class="vt">Feedback loop</div><div class="vd">A model's biased outputs shape future inputs, reinforcing the bias.</div></div>
+   <div class="vocab"><div class="vt">Power asymmetry</div><div class="vd">The imbalance between those who hold data and those it describes.</div></div>
+   <div class="vocab"><div class="vt">Data as liability</div><div class="vd">Hoarded personal data is a hazard that leaks — collecting less is safer.</div></div>
+ </div>`}
+];
+
+const QUIZ=[
+ {q:"Why does the book favour log-based derived data over distributed transactions for integrating different systems?",
+  opts:["Transactions are always wrong","Cross-system distributed transactions are fragile and interoperate poorly, while ordered logs are robust, loosely coupled, and scalable","Logs are faster to type","Derived data needs no source of truth"],correct:1,
+  ex:"Distributed transactions across heterogeneous systems are tightly coupled and brittle at scale. An ordered <strong>log</strong> with idempotent consumers lets each system derive its state independently — far more robust."},
+ {q:"A cache or materialized view essentially does what?",
+  opts:["Removes the need for a database","Shifts computation from the read path to the write path","Slows down writes for no reason","Makes data immutable"],correct:1,
+  ex:"Precomputing a view on write means reads are instant — you've moved the work from <strong>read time</strong> to <strong>write time</strong>. You can push that boundary all the way to the user's device."},
+ {q:"How is 'exactly-once' processing genuinely achieved, per the end-to-end argument?",
+  opts:["By trusting TCP and the message broker","By giving operations unique IDs and making their effects idempotent, so retries are harmless","By never retrying anything","By using distributed transactions everywhere"],correct:1,
+  ex:"Lower layers can't prevent a duplicated payment. Correctness is enforced <strong>end-to-end</strong>: a unique operation ID plus idempotent effects mean a retry anywhere in the stack does no harm."},
+ {q:"Why does the book say integrity matters more than timeliness?",
+  opts:["Timeliness is impossible","A stale read is temporary and self-correcting, but corruption or loss is permanent and catastrophic","They're the same thing","Integrity is easier to achieve"],correct:1,
+  ex:"Briefly stale data (timeliness) fixes itself; corrupted or lost data (integrity) does not. Log-based dataflow preserves <strong>integrity</strong> without synchronous coordination — so you relax timeliness, not integrity."}
+];
+
+function initExtra(){
+  const sel=document.getElementById('syncSel');const out=document.getElementById('syncOut');
+  if(!sel)return;
+  const R={
+    index:["co-win","Log-based derived data (CDC)","Capture the database's change log and feed the search index as a derived consumer. It stays in sync automatically, asynchronously, and can be rebuilt by replaying the log."],
+    atomic:["co-cost","Distributed transaction — if you must","True cross-system atomic commit needs 2PC/XA, which is tightly coupled and fragile. Use it only when unavoidable; otherwise redesign so one log is the source of truth."],
+    unique:["co-note","Route through one log partition","Send all writes for the constrained key to a single log partition with a single consumer. That serial order lets you enforce uniqueness without a distributed transaction."],
+    region:["co-win","Coordination-avoiding derived data","Drop linearizable coordination and keep integrity via idempotent, deterministic, log-based dataflow. Each region derives state locally — fast and available, correct without round-trips."]
+  };
+  const upd=()=>{const r=R[sel.value];out.innerHTML=`<div class="callout ${r[0]}"><span class="co-tag">Approach · ${r[1]}</span><p>${r[2]}</p></div>`;};
+  sel.addEventListener('change',upd);upd();
+}
+
+
+const tabBar=document.getElementById('tabBar');
+const main=document.getElementById('main');
+DATA.forEach((s,i)=>{
+  const btn=document.createElement('button');
+  btn.className='tab-btn'+(i===0?' active':'');
+  btn.textContent=s.tab; btn.onclick=()=>showTab(i); tabBar.appendChild(btn);
+  const panel=document.createElement('section');
+  panel.className='tab-panel'+(i===0?' active':''); panel.id='panel-'+i;
+  panel.innerHTML=`<div class="stage"><div class="container"><div class="stage-header"><div class="stage-num-big">${s.num}</div><div><div class="stage-title">${s.title}</div><div class="stage-kicker">${s.kicker}</div></div></div><div class="body-wrap"><div class="spacer"></div><div class="prose">${s.body}</div></div></div></div>`;
+  main.appendChild(panel);
+});
+function showTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  window.scrollTo({top:document.querySelector('.tabs').offsetTop-60,behavior:'smooth'});
+}
+const overlay=document.getElementById('overlay');
+function openSnip(key){const s=SNIPPETS[key];if(!s)return;
+  document.getElementById('mCat').textContent=s.cat;
+  document.getElementById('mQ').textContent=s.title;
+  document.getElementById('mBody').innerHTML=s.body;
+  overlay.classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('closeBtn').onclick=closeModal;
+overlay.onclick=e=>{if(e.target===overlay)closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+// dropdown
+const drop=document.getElementById('chDrop');
+document.getElementById('chDropBtn').onclick=e=>{e.stopPropagation();drop.classList.toggle('open');};
+document.addEventListener('click',()=>drop.classList.remove('open'));
+// generic quiz mounter: window.QUIZ + #quizMount
+function mountQuiz(){
+  if(typeof QUIZ==='undefined')return;
+  const qm=document.getElementById('quizMount'); if(!qm)return;
+  QUIZ.forEach((item,qi)=>{
+    const box=document.createElement('div');box.className='quiz';
+    let html=`<div class="q">${qi+1}. ${item.q}</div>`;
+    item.opts.forEach((o,oi)=>{html+=`<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`;});
+    html+=`<div class="explain" id="ex-${qi}">${item.ex}</div>`;
+    box.innerHTML=html;qm.appendChild(box);
+  });
+  qm.addEventListener('click',e=>{
+    const b=e.target.closest('.opt');if(!b)return;
+    const box=b.closest('.quiz');if(box.dataset.done)return;box.dataset.done='1';
+    const qi=+b.dataset.q,oi=+b.dataset.o,correct=QUIZ[qi].correct;
+    box.querySelectorAll('.opt').forEach((opt,idx)=>{
+      if(idx===correct)opt.classList.add('correct');else if(idx===oi)opt.classList.add('wrong');
+      opt.style.cursor='default';});
+    document.getElementById('ex-'+qi).classList.add('show');
+  });
+}
+mountQuiz();
+if(typeof initExtra==='function'){try{initExtra();}catch(e){console.error(e);}}
+
+</script>
+</body>
+</html>

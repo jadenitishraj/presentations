@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDIA · 02 — Data Models & Query Languages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#09090e;--ink:#f4f1ea;--ink-dim:#aba7b9;--ink-faint:#5f5a72;
+  --sky:#0ea5e9;--emerald:#10b981;--indigo:#6366f1;--violet:#8b5cf6;--amber:#f59e0b;--rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.03);--card-border:rgba(255,255,255,.08);--panel:rgba(255,255,255,.02);--accent:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter Tight',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden;background-color:#08080c;
+  background-image:radial-gradient(circle at 15% 50%, rgba(139,92,246,.08), transparent 25%),radial-gradient(circle at 85% 30%, rgba(99,102,241,.08), transparent 25%);background-attachment:fixed;}
+.container{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--ink-dim)}
+
+/* ===== top site nav ===== */
+.sitenav{position:sticky;top:0;z-index:120;background:rgba(8,8,12,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--card-border)}
+.sitenav-inner{max-width:1180px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:18px}
+.brand{font-family:'Fraunces',serif;font-weight:800;font-size:16px;letter-spacing:-.02em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand em{font-style:italic;font-weight:300;color:var(--violet)}
+.nav-spacer{flex:1}
+.nav-prevnext{display:flex;gap:8px}
+.nav-prevnext a{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--card-border);border-radius:5px;color:var(--ink-dim);text-decoration:none;transition:all .18s}
+.nav-prevnext a:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.nav-prevnext a.disabled{opacity:.3;pointer-events:none}
+.dropdown{position:relative}
+.dropbtn{font:600 12px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;color:#e7e1ff;cursor:pointer;display:flex;align-items:center;gap:8px}
+.dropbtn .chev{transition:transform .2s}
+.dropdown.open .chev{transform:rotate(180deg)}
+.dropmenu{position:absolute;top:calc(100% + 8px);left:0;min-width:340px;max-height:70vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--card-border));border-radius:10px;padding:8px;box-shadow:0 24px 70px rgba(0,0,0,.6);display:none;z-index:130}
+.dropdown.open .dropmenu{display:block;animation:fadeIn .2s ease}
+.dropmenu a{display:flex;gap:12px;align-items:baseline;padding:10px 12px;border-radius:7px;text-decoration:none;color:var(--ink-dim);transition:all .15s}
+.dropmenu a:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.dropmenu a.cur{background:color-mix(in srgb,var(--accent) 16%,transparent);color:#fff}
+.dropmenu a .dn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--violet);flex:0 0 26px}
+.dropmenu a .dt{font-size:14.5px;font-weight:400;line-height:1.3}
+.dropmenu .part{font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:12px 12px 6px}
+
+/* hero */
+.hero{min-height:86vh;display:flex;flex-direction:column;justify-content:center;padding:70px 0 60px;position:relative}
+.hero .stage-num{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:14px;color:var(--ink-faint);margin-bottom:24px}
+.hero h1{font-size:clamp(42px,7.6vw,88px);margin-bottom:28px;background:linear-gradient(135deg,var(--violet),var(--indigo),var(--sky));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{font-size:clamp(18px,2.2vw,22px);max-width:880px;color:var(--ink-dim);margin-bottom:48px;font-weight:300}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1040px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:32px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+
+/* tabs */
+.tabs{position:sticky;top:57px;z-index:50;background:rgba(8,8,12,.91);backdrop-filter:blur(14px);border-bottom:1px solid var(--card-border);padding:14px 0}
+.tabs-inner{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tab-btn{font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:4px;color:var(--ink-dim);cursor:pointer;transition:all .2s}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* stage */
+.stage{padding:64px 0 84px;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:36px;align-items:start}
+.stage-num-big{font-family:'Fraunces',serif;font-style:italic;font-size:60px;line-height:1;color:var(--accent);font-weight:300}
+.stage-title{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.03em;line-height:1.05;margin-bottom:12px}
+.stage-kicker{font-size:17px;color:var(--ink-dim);font-weight:300;max-width:870px}
+
+/* body */
+.body-wrap{display:grid;grid-template-columns:80px 1fr;gap:24px}
+.prose{max-width:880px}
+.prose h3{font-family:'Fraunces',serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:34px 0 14px;color:var(--ink)}
+.prose h3:first-child{margin-top:0}
+.prose h4{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:28px 0 12px}
+.prose p{font-size:16.5px;color:var(--ink-dim);font-weight:300;line-height:1.72;margin-bottom:15px}
+.prose p strong{color:var(--ink);font-weight:600}
+.prose ul{list-style:none;margin:6px 0 18px}
+.prose li{font-size:16px;color:var(--ink-dim);font-weight:300;line-height:1.65;padding-left:22px;position:relative;margin-bottom:9px}
+.prose li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.prose li strong{color:var(--ink);font-weight:600}
+code.inl{font-family:'JetBrains Mono',monospace;font-size:13.5px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22);border-radius:4px;padding:2px 6px;color:#d6ccff}
+
+/* callouts */
+.callout{border-radius:8px;padding:18px 20px;margin:22px 0;border:1px solid;backdrop-filter:blur(8px);font-size:15.5px;font-weight:300;line-height:1.65}
+.callout .co-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:block}
+.callout p{margin:0 0 8px;font-size:15.5px;color:var(--ink-dim)}
+.callout p:last-child{margin-bottom:0}
+.callout strong{color:var(--ink);font-weight:600}
+.co-trap{background:rgba(244,63,94,.07);border-color:rgba(244,63,94,.3)}.co-trap .co-tag{color:var(--rose)}
+.co-note{background:rgba(14,165,233,.06);border-color:rgba(14,165,233,.28)}.co-note .co-tag{color:var(--sky)}
+.co-cost{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3)}.co-cost .co-tag{color:var(--amber)}
+.co-win{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.28)}.co-win .co-tag{color:var(--emerald)}
+
+/* vocab */
+.vocab-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0 8px}
+.vocab{background:var(--card-bg);border:1px solid var(--card-border);border-left:3px solid var(--accent);border-radius:6px;padding:16px 18px}
+.vocab .vt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;color:#d6ccff;margin-bottom:6px}
+.vocab .vd{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.55}
+
+/* concept cards -> modal */
+.code-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+.code-card{display:flex;align-items:center;gap:13px;background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-left:3px solid var(--sky);border-radius:6px;padding:16px 18px;cursor:pointer;transition:all .18s}
+.code-card:hover{background:rgba(255,255,255,.05);transform:translateY(-2px);border-left-color:var(--violet)}
+.code-card .cc-ico{font:700 14px 'JetBrains Mono',monospace;color:var(--sky);flex:0 0 auto}
+.code-card .cc-t{font-size:15px;color:var(--ink);font-weight:500;line-height:1.3}
+.code-card .cc-s{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+.code-card .cc-go{margin-left:auto;font:700 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);flex:0 0 auto}
+.code-card:hover .cc-go{color:var(--violet)}
+
+/* code block */
+.codeblock{background:#0c0c13;border:1px solid var(--card-border);border-radius:8px;margin:18px 0;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--card-border);background:rgba(255,255,255,.015)}
+.codeblock .cb-title{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.codeblock pre{margin:0;padding:16px 18px;overflow-x:auto}
+.codeblock code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cfd3e0;white-space:pre}
+.cmt{color:#6a6a85}.kw{color:#c4b5fd}.str{color:#7fd4a0}.flg{color:#7cc5f0}
+
+/* table */
+.cmp{width:100%;border-collapse:collapse;margin:20px 0;font-size:14.5px}
+.cmp th,.cmp td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--card-border)}
+.cmp th{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.cmp td{color:var(--ink-dim);font-weight:300}
+.cmp td:first-child{color:var(--ink);font-weight:500}
+.cmp tr:hover td{background:rgba(255,255,255,.02)}
+.yes{color:var(--emerald);font-weight:600}.no{color:var(--rose);font-weight:600}
+
+/* diagram */
+.diagram{background:rgba(13,13,20,.6);border:1px solid var(--card-border);border-radius:10px;padding:26px 22px;margin:22px 0}
+.diagram .dg-cap{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center;margin-top:16px}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.node{background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;padding:11px 15px;font:600 13px 'Inter Tight',sans-serif;color:var(--ink);text-align:center;min-width:96px}
+.node.sky{background:rgba(14,165,233,.13);border-color:rgba(14,165,233,.34)}
+.node.em{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.32)}
+.node.am{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32)}
+.node.ro{background:rgba(244,63,94,.13);border-color:rgba(244,63,94,.36)}
+.arrow{color:var(--ink-faint);font-size:18px}
+.box-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.mbox{flex:1;min-width:150px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.mbox .mb-t{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.mbox .mb-d{font-size:13px;color:var(--ink-dim);font-weight:300}
+
+/* quiz */
+.quiz{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:22px 24px;margin:18px 0}
+.quiz .q{font-size:16.5px;color:var(--ink);font-weight:500;margin-bottom:14px}
+.quiz .opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:12px 16px;margin-bottom:9px;color:var(--ink-dim);font-size:15px;cursor:pointer;transition:all .15s;font-family:'Inter Tight',sans-serif}
+.quiz .opt:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.quiz .opt.correct{border-color:var(--emerald);background:rgba(16,185,129,.12);color:var(--ink)}
+.quiz .opt.wrong{border-color:var(--rose);background:rgba(244,63,94,.1)}
+.quiz .explain{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.6;margin-top:10px;padding-top:12px;border-top:1px solid var(--card-border);display:none}
+.quiz .explain.show{display:block}.quiz .explain strong{color:var(--ink)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,4,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex;animation:fadeIn .25s ease}
+.modal{max-width:820px;width:100%;max-height:88vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));border-radius:10px;padding:34px 36px 30px;position:relative;box-shadow:0 30px 90px rgba(0,0,0,.65);}
+.modal .m-cat{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modal .m-q{font-family:'Fraunces',serif;font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin-bottom:6px}
+.modal .m-hint{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px}
+.modal .m-body{font-size:15.5px;color:var(--ink-dim);font-weight:300;line-height:1.68}
+.modal .m-body p{margin-bottom:13px}.modal .m-body strong{color:var(--ink);font-weight:600}
+.modal .m-body ul{list-style:none;margin:6px 0 14px}
+.modal .m-body li{padding-left:22px;position:relative;margin-bottom:8px}
+.modal .m-body li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.modal-close:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,transparent)}
+
+.foot{padding:50px 0 80px;text-align:center;border-top:1px solid var(--card-border);color:var(--ink-faint);font-size:14px}
+
+@media(max-width:900px){
+  .stats,.vocab-grid,.code-cards{grid-template-columns:1fr}
+  .stage-header,.body-wrap{grid-template-columns:1fr}
+  .dropmenu{min-width:280px}
+  .nav-prevnext{display:none}
+  .modal{padding:28px 22px 24px}
+  .cmp{font-size:13px}.cmp th,.cmp td{padding:10px 10px}
+  .tabs{top:55px}
+}
+
+/* ===== interactive widgets (shared) ===== */
+.widget{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:24px;margin:24px 0}
+.widget .w-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);margin-bottom:6px}
+.widget .w-title{font-family:'Fraunces',serif;font-weight:800;font-size:20px;letter-spacing:-.02em;margin-bottom:16px;color:var(--ink)}
+.widget label{display:block;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.widget input[type=range]{width:100%;accent-color:var(--violet);margin-bottom:6px}
+.widget .w-val{font-family:'JetBrains Mono',monospace;color:#d6ccff;font-weight:700}
+.widget select{background:#11111a;color:var(--ink);border:1px solid var(--card-border);border-radius:6px;padding:9px 12px;font-family:'Inter Tight',sans-serif;font-size:14px;margin-bottom:10px}
+.w-out{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.w-out .wo{background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.w-out .wo .wo-n{font-family:'Fraunces',serif;font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ink)}
+.w-out .wo .wo-l{font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
+.w-btn{display:inline-block;width:auto;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:8px 16px;color:var(--ink-dim);font:600 12px 'JetBrains Mono',monospace;cursor:pointer;transition:all .15s;margin-top:8px}
+.w-btn:hover{background:rgba(255,255,255,.07);color:var(--ink);border-color:var(--accent)}
+.pbars{display:flex;align-items:flex-end;gap:2px;height:120px;margin:10px 0 4px}
+.pbar{flex:1;background:rgba(139,92,246,.25);border-radius:2px 2px 0 0;transition:background .2s}
+.pbar.p50{background:var(--emerald)}.pbar.p95{background:var(--amber)}.pbar.p99{background:var(--rose)}
+.pleg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font:600 11px 'JetBrains Mono',monospace}
+.pleg span{display:flex;align-items:center;gap:6px;color:var(--ink-dim)}
+.pleg i{width:11px;height:11px;border-radius:2px;display:inline-block}
+@media(max-width:900px){.w-out{grid-template-columns:1fr}}
+</style>
+</head>
+<body style="--accent:var(--violet)">
+<nav class="sitenav">
+  <div class="sitenav-inner">
+    <a class="brand" href="index.html">DDIA <em>interactive</em></a>
+    <div class="dropdown" id="chDrop">
+      <button class="dropbtn" id="chDropBtn">Chapters <span class="chev">▾</span></button>
+      <div class="dropmenu"><div class="part">Part I · Foundations of Data Systems</div><a class="" href="chapter01.html"><span class="dn">01</span><span class="dt">Reliable, Scalable & Maintainable</span></a><a class="cur" href="chapter02.html"><span class="dn">02</span><span class="dt">Data Models & Query Languages</span></a><a class="" href="chapter03.html"><span class="dn">03</span><span class="dt">Storage & Retrieval</span></a><a class="" href="chapter04.html"><span class="dn">04</span><span class="dt">Encoding & Evolution</span></a><div class="part">Part II · Distributed Data</div><a class="" href="chapter05.html"><span class="dn">05</span><span class="dt">Replication</span></a><a class="" href="chapter06.html"><span class="dn">06</span><span class="dt">Partitioning</span></a><a class="" href="chapter07.html"><span class="dn">07</span><span class="dt">Transactions</span></a><a class="" href="chapter08.html"><span class="dn">08</span><span class="dt">The Trouble with Distributed Systems</span></a><a class="" href="chapter09.html"><span class="dn">09</span><span class="dt">Consistency & Consensus</span></a><div class="part">Part III · Derived Data</div><a class="" href="chapter10.html"><span class="dn">10</span><span class="dt">Batch Processing</span></a><a class="" href="chapter11.html"><span class="dn">11</span><span class="dt">Stream Processing</span></a><a class="" href="chapter12.html"><span class="dn">12</span><span class="dt">The Future of Data Systems</span></a></div>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-prevnext"><a href="glossary.html">Dictionary</a><a href="chapter01.html">← Prev</a><a href="chapter03.html">Next →</a></div>
+  </div>
+</nav>
+<section class="hero"><div class="container">
+  <div class="stage-num">DDIA · Chapter 2 · Part I — Foundations</div>
+  <h1 class="display">Data Models<br>&amp; <em>Query</em><br>Languages</h1>
+  <p class="sub">The shape you give your data decides everything above it. Relational vs document vs graph, why NoSQL was born, the object-relational mismatch, and declarative vs imperative querying.</p>
+  <div class="stats"><div class="stat"><div class="num">3</div><div class="label">data models</div></div><div class="stat"><div class="num">7</div><div class="label">sections</div></div><div class="stat"><div class="num">1</div><div class="label">live widget</div></div><div class="stat"><div class="num">click</div><div class="label">for deep dives</div></div></div>
+</div></section>
+<nav class="tabs"><div class="container"><div class="tabs-inner" id="tabBar"></div></div></nav>
+<main id="main"></main>
+<div class="foot container">There is no one right data model — relational, document, and graph each fit a different shape of data and a different set of relationships. Pick the model that matches your data's connections.</div>
+<div class="modal-overlay" id="overlay"><div class="modal" id="modal">
+  <button class="modal-close" id="closeBtn" aria-label="Close">&times;</button>
+  <div class="m-cat" id="mCat"></div><div class="m-q" id="mQ"></div>
+  <div class="m-hint" id="mHint">Deep dive — explained simply</div>
+  <div class="m-body" id="mBody"></div>
+</div></div>
+<script>
+const SNIPPETS={
+  mismatch:{cat:"Relational vs Document · Mismatch",title:"The object-relational mismatch",
+   body:`<p>Application code lives in objects/structures. Relational databases live in flat tables of rows and columns. The awkward translation layer between them is the <strong>impedance mismatch</strong>.</p>
+   <p>ORMs (Hibernate, ActiveRecord, SQLAlchemy) hide the gap but never fully remove it. For data that is naturally a tree — a résumé with positions, education, contact info — a <strong>document</strong> (one JSON blob) matches the object far more cleanly than rows spread across many tables.</p>
+   <div class="codeblock"><div class="cb-head"><span class="cb-title">one self-contained document</span></div><pre><code>{
+  <span class="str">"user_id"</span>: 251,
+  <span class="str">"name"</span>: <span class="str">"Bill"</span>,
+  <span class="str">"positions"</span>: [
+    {<span class="str">"job"</span>:<span class="str">"Co-chair"</span>, <span class="str">"org"</span>:<span class="str">"Gates Foundation"</span>},
+    {<span class="str">"job"</span>:<span class="str">"Co-founder"</span>, <span class="str">"org"</span>:<span class="str">"Microsoft"</span>}
+  ]
+}</code></pre></div>
+   <p>The tree structure and <strong>locality</strong> (it's all in one place) are the document model's big wins.</p>`},
+
+  m2m:{cat:"Relational vs Document · Relationships",title:"Many-to-one & many-to-many — where documents hurt",
+   body:`<p>Storing a plain string like <code class="inl">"region": "Greater Seattle Area"</code> repeats the text everywhere. Storing an <strong>ID</strong> that points to one canonical entry is normalization — it removes duplication and ambiguity.</p>
+   <ul>
+     <li><strong>Many-to-one</strong> (many people → one region) and <strong>many-to-many</strong> (people → organizations → other people) need references between records.</li>
+     <li>Relational handles this with <strong>joins</strong>, which it's built for.</li>
+     <li>Document databases support joins weakly, so you end up emulating them in application code — slower and more error-prone.</li>
+   </ul>
+   <div class="callout co-cost"><span class="co-tag">The trade</span><p>Trees love documents. Graphs of relationships love the relational (or graph) model. As data gets more interconnected, the document model fights you.</p></div>`},
+
+  history:{cat:"Relational vs Document · History",title:"Are document DBs repeating history?",
+   body:`<p>This argument is old. In the 1970s the <strong>hierarchical model</strong> (IBM's IMS) stored everything as a tree of nested records — exactly like JSON documents. It struggled with many-to-many relationships, the same weakness documents have today.</p>
+   <p>Two solutions competed to replace it:</p>
+   <ul>
+     <li><strong>Network model (CODASYL)</strong> — records linked by pointers/access paths. Powerful but you had to manually navigate paths; changing the structure was brutal.</li>
+     <li><strong>Relational model (Codd, 1970)</strong> — just tables, with the query optimizer choosing access paths for you. It won decisively.</li>
+   </ul>
+   <p>So the NoSQL document model isn't new — it's the hierarchical model returning. The relational model already beat it once for interconnected data. History rhymes.</p>`},
+
+  schema:{cat:"Relational vs Document · Schema",title:"Schema-on-read vs schema-on-write",
+   body:`<ul>
+     <li><strong>Schema-on-write</strong> (relational) — the schema is enforced when you write. Like static typing: errors caught early, structure guaranteed.</li>
+     <li><strong>Schema-on-read</strong> (document) — structure is only assumed when you read. Like dynamic typing: flexible, but the burden of handling variation moves into your code.</li>
+   </ul>
+   <p>Neither is "schemaless" — schema-on-read just means the schema is implicit. Documents shine when data is heterogeneous or the structure changes often; relational shines when records are uniform and relationships matter.</p>
+   <div class="callout co-note"><span class="co-tag">Converging</span><p>The two worlds are merging: relational DBs (PostgreSQL) now have rich JSON support, and document DBs add joins and schema validation. The model is a spectrum, not a war.</p></div>`},
+
+  declarative:{cat:"Query Languages",title:"Declarative vs imperative — why SQL won",
+   body:`<p>An <strong>imperative</strong> query says <em>how</em>: loop, compare, push to a list, step by step. A <strong>declarative</strong> query (SQL) says <em>what</em> you want and lets the database figure out how.</p>
+   <div class="codeblock"><div class="cb-head"><span class="cb-title">declarative — SQL</span></div><pre><code><span class="kw">SELECT</span> * <span class="kw">FROM</span> animals <span class="kw">WHERE</span> family = <span class="str">'Sharks'</span>;</code></pre></div>
+   <p>Why declarative wins:</p>
+   <ul>
+     <li>The <strong>query optimizer</strong> picks the access path — and improves it without you rewriting queries.</li>
+     <li>It hides implementation details, so the engine can add indexes, reorder, or parallelize freely.</li>
+     <li>It <strong>parallelizes</strong> naturally across cores/machines; imperative loops with ordering assumptions don't.</li>
+   </ul>
+   <p>The same idea powers the web: CSS and XPath are declarative selectors. You describe which elements to style; the browser finds them.</p>`},
+
+  mapreduce:{cat:"Query Languages · MapReduce",title:"MapReduce — between declarative and imperative",
+   body:`<p>MapReduce queries (e.g. older MongoDB) sit in the middle: you supply two pure functions and the framework runs them across many documents.</p>
+   <ul>
+     <li><strong>map</strong> — called once per document, emits key→value pairs.</li>
+     <li><strong>reduce</strong> — combines all values for the same key.</li>
+   </ul>
+   <div class="codeblock"><div class="cb-head"><span class="cb-title">count sharks observed per month</span></div><pre><code><span class="kw">function</span> map() { emit(this.month, this.numAnimals); }
+<span class="kw">function</span> reduce(month, counts) { <span class="kw">return</span> sum(counts); }</code></pre></div>
+   <p>The functions must be <strong>pure</strong> (no side effects) so the framework can run, retry, and parallelize them safely. Many databases now offer a declarative aggregation pipeline that's easier and the optimizer can speed up.</p>`},
+
+  graph:{cat:"Graph models",title:"Property graphs & Cypher",
+   body:`<p>When <strong>many-to-many relationships dominate</strong> — social networks, road maps, who-knows-whom — model the data as a graph: <strong>vertices</strong> (things) and <strong>edges</strong> (relationships).</p>
+   <p>In a property graph each vertex and edge has an ID, labels, and key-value properties. Cypher (Neo4j's language) is declarative and reads like the pattern you're searching for:</p>
+   <div class="codeblock"><div class="cb-head"><span class="cb-title">Cypher — people who emigrated from the US to Europe</span></div><pre><code><span class="kw">MATCH</span>
+  (person)-[:BORN_IN]->()-[:WITHIN*0..]->(us {name:<span class="str">'United States'</span>}),
+  (person)-[:LIVES_IN]->()-[:WITHIN*0..]->(eu {name:<span class="str">'Europe'</span>})
+<span class="kw">RETURN</span> person.name</code></pre></div>
+   <p>The <code class="inl">*0..</code> means "follow this edge any number of times" — graceful for varying-depth hierarchies. Doing the same in SQL needs recursive common table expressions, which are notoriously hard to write.</p>`},
+
+  triples:{cat:"Graph models · Triples",title:"Triple-stores, SPARQL & Datalog",
+   body:`<p>Another way to express a graph: store everything as three-part facts — <strong>(subject, predicate, object)</strong>. "Jim — likes — bananas." This is the triple-store model, and the basis of the Semantic Web's RDF.</p>
+   <ul>
+     <li><strong>SPARQL</strong> — the query language for RDF triple-stores; conceptually similar to Cypher.</li>
+     <li><strong>Datalog</strong> — an older, foundational approach: facts plus rules that derive new facts. More powerful and composable, and it underlies several modern query systems.</li>
+   </ul>
+   <p>The point isn't which syntax — it's that graph-shaped data deserves a graph-shaped query language. Forcing it into table joins is painful.</p>`}
+};
+
+const DATA=[
+{num:"00",tab:"Why models matter",title:"Data models — the most important choice",
+ kicker:"The model you pick shapes not just how you store data, but how you're able to think about the problem.",
+ body:`
+ <h3>Layers of models</h3>
+ <p>Most apps are built by stacking models, each hiding the one below: your objects sit on a data model (relational/document/graph), which sits on bytes on disk, which sit on electrical currents. Each layer is a clean <strong>abstraction</strong> that lets different people work without understanding all the layers below.</p>
+ <p>The data model is the layer that decides what's <strong>easy</strong> and what's <strong>painful</strong> in everything above it. Get it right and the application almost writes itself; get it wrong and you fight the database forever.</p>
+ <div class="box-row">
+   <div class="mbox"><div class="mb-t">Relational</div><div class="mb-d">Tables of rows. Great for structured, interconnected data.</div></div>
+   <div class="mbox"><div class="mb-t">Document</div><div class="mb-d">Self-contained JSON-like trees. Great for one-to-many, varied data.</div></div>
+   <div class="mbox"><div class="mb-t">Graph</div><div class="mb-d">Vertices + edges. Great when everything connects to everything.</div></div>
+ </div>
+ <div class="callout co-win"><span class="co-tag">Chapter in one line</span><p>There's no universally best model. Match the model to the <strong>shape of your data's relationships</strong> — trees, references, or webs.</p></div>`},
+
+{num:"01",tab:"Relational vs Document",title:"Relational vs Document",
+ kicker:"The biggest practical choice — and it comes down to how connected your data is.",
+ body:`
+ <h3>Where they came from</h3>
+ <p>Relational (SQL) has ruled since the 1980s — business data, transactions, the web. <strong>NoSQL</strong> emerged around 2010 for two reasons: the need for greater scale and throughput than SQL comfortably gave, and frustration with the rigid relational schema. "NoSQL" really means "not only SQL."</p>
+
+ <h3>The object-relational mismatch</h3>
+ <p>Your code uses objects; SQL uses flat tables. Bridging them is awkward. For tree-shaped data (a résumé), one document mirrors the object cleanly, while relational spreads it over many tables.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('mismatch')"><span class="cc-ico">{ }</span><div><div class="cc-t">The impedance mismatch</div><div class="cc-s">objects vs tables + ORMs</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('m2m')"><span class="cc-ico">{ }</span><div><div class="cc-t">Where documents hurt</div><div class="cc-s">many-to-one & many-to-many</div></div><span class="cc-go">view →</span></div>
+ </div>
+
+ <h3>The deciding question</h3>
+ <p>It's all about relationships:</p>
+ <ul>
+   <li>Data is mostly <strong>self-contained trees</strong> (one-to-many)? Documents win — locality, no joins, matches your objects.</li>
+   <li>Data has lots of <strong>references</strong> (many-to-one, many-to-many)? Relational wins — joins are its home turf.</li>
+ </ul>
+
+ <div class="widget">
+   <div class="w-tag">Try it</div>
+   <div class="w-title">Which model fits your data?</div>
+   <label>How is your data shaped?</label>
+   <select id="shapeSel">
+     <option value="tree">Mostly self-contained records (a résumé, an invoice)</option>
+     <option value="ref">Lots of shared references (users → one shared "region")</option>
+     <option value="web">Everything connects to everything (a social graph)</option>
+     <option value="mixed">Uniform records with heavy reporting/joins</option>
+   </select>
+   <div id="modelOut" style="margin-top:8px"></div>
+ </div>
+
+ <div class="callout co-trap"><span class="co-tag">Don't over-denormalize</span><p>The document model tempts you to copy data everywhere for locality. That's fine until a value changes in 10,000 places. Duplicate read-only-ish data; reference data that changes.</p></div>`},
+
+{num:"02",tab:"History & schema",title:"History repeats, and schemas",
+ kicker:"This debate already happened in the 1970s — and how each model handles change.",
+ body:`
+ <h3>Are document DBs repeating history?</h3>
+ <p>The "store everything as a nested tree" idea isn't new. IBM's IMS (1960s–70s) did exactly that with the <strong>hierarchical model</strong>, hit the same many-to-many wall, and was largely replaced by the relational model. The NoSQL document model is, in a real sense, that old idea coming back around.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('history')"><span class="cc-ico">{ }</span><div><div class="cc-t">Hierarchical, network, relational</div><div class="cc-s">why relational won once already</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('schema')"><span class="cc-ico">{ }</span><div><div class="cc-t">Schema-on-read vs on-write</div><div class="cc-s">the flexibility trade</div></div><span class="cc-go">view →</span></div>
+ </div>
+
+ <h3>Schema flexibility</h3>
+ <table class="cmp">
+   <tr><th></th><th>Document (schema-on-read)</th><th>Relational (schema-on-write)</th></tr>
+   <tr><td>When checked</td><td>At read time (implicit)</td><td>At write time (enforced)</td></tr>
+   <tr><td>Analogy</td><td>Dynamic typing</td><td>Static typing</td></tr>
+   <tr><td>Best for</td><td>Heterogeneous, changing data</td><td>Uniform records, relationships</td></tr>
+   <tr><td>Changing structure</td><td><span class="yes">Easy</span> — just write new shape</td><td>Needs a migration (ALTER TABLE)</td></tr>
+ </table>
+
+ <h3>They're converging</h3>
+ <p>This isn't a fight to the death. PostgreSQL has first-class JSON; document stores are adding joins and optional schemas. Most real systems are becoming a blend — pick per use case, not per religion.</p>`},
+
+{num:"03",tab:"Query languages",title:"Query languages — declarative wins",
+ kicker:"How you ask for data matters as much as how you store it.",
+ body:`
+ <h3>Telling the database what, not how</h3>
+ <p>An <strong>imperative</strong> query is a step-by-step recipe. A <strong>declarative</strong> one (SQL, CSS, XPath) describes the result and lets the engine decide how to get it. Declarative won the database world for good reasons.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('declarative')"><span class="cc-ico">{ }</span><div><div class="cc-t">Why SQL beat imperative</div><div class="cc-s">optimizer + parallelism</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('mapreduce')"><span class="cc-ico">{ }</span><div><div class="cc-t">MapReduce querying</div><div class="cc-s">map + reduce, the middle ground</div></div><span class="cc-go">view →</span></div>
+ </div>
+
+ <div class="callout co-win"><span class="co-tag">Why it matters</span><p>Because you say <em>what</em> not <em>how</em>, the database can add an index, reorder joins, or spread work across machines — and your query gets faster <strong>without you changing a line</strong>. Imperative code with hidden ordering assumptions can't be optimized that freely.</p></div>
+
+ <h3>The same idea on the web</h3>
+ <p>CSS selectors and XPath are declarative: you write <code class="inl">li.selected &gt; p</code>, the browser finds matching elements. Imagine doing that with manual JavaScript loops every time the page changed — that's the imperative pain SQL spares you.</p>`},
+
+{num:"04",tab:"Graph models",title:"Graph-like data models",
+ kicker:"When many-to-many relationships dominate, stop fighting tables — use a graph.",
+ body:`
+ <h3>When data is a web</h3>
+ <p>Social networks, road networks, web pages, recommendation graphs — anything where connections are the main thing. Forcing these into relational joins gets ugly fast (depth-varying relationships need recursive queries). A graph model makes the connections first-class.</p>
+ <div class="diagram">
+   <div class="flow">
+     <div class="node">Person: Lucy</div><span class="arrow">—lives_in→</span>
+     <div class="node sky">City: Idaho</div><span class="arrow">—within→</span>
+     <div class="node em">Country: USA</div>
+   </div>
+   <div class="dg-cap">Vertices (things) connected by labelled edges (relationships)</div>
+ </div>
+
+ <h3>Two graph styles</h3>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('graph')"><span class="cc-ico">{ }</span><div><div class="cc-t">Property graphs + Cypher</div><div class="cc-s">Neo4j model</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('triples')"><span class="cc-ico">{ }</span><div><div class="cc-t">Triple-stores, SPARQL, Datalog</div><div class="cc-s">(subject, predicate, object)</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="callout co-note"><span class="co-tag">Key strength</span><p>Graphs handle <strong>variable-depth traversal</strong> ("follow this relationship any number of hops") naturally — the thing that makes the equivalent SQL recursive query so painful. If your queries are "how is X connected to Y," you want a graph.</p></div>
+
+ <h3>Self-check</h3>
+ <div id="quizMount"></div>`},
+
+{num:"05",tab:"Glossary",title:"Glossary — Chapter 2",
+ kicker:"Every key term, grouped. Define each in your own words and you own the chapter.",
+ body:`
+ <h4>Models</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Data model</div><div class="vd">How data is structured — the layer that decides what's easy or hard above it.</div></div>
+   <div class="vocab"><div class="vt">Relational model</div><div class="vd">Data as tables of rows; relationships via joins. (Codd, 1970.)</div></div>
+   <div class="vocab"><div class="vt">Document model</div><div class="vd">Self-contained nested records (JSON-like). Great for trees.</div></div>
+   <div class="vocab"><div class="vt">Graph model</div><div class="vd">Vertices + edges. Great when many-to-many relationships dominate.</div></div>
+   <div class="vocab"><div class="vt">NoSQL</div><div class="vd">"Not only SQL" — non-relational stores, driven by scale + schema flexibility.</div></div>
+   <div class="vocab"><div class="vt">Hierarchical model</div><div class="vd">1970s tree model (IMS). The document model's ancestor; weak at many-to-many.</div></div>
+   <div class="vocab"><div class="vt">Network model (CODASYL)</div><div class="vd">Records linked by manual access paths. Powerful but hard to change.</div></div>
+ </div>
+ <h4>Relationships & schema</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Impedance mismatch</div><div class="vd">The awkward gap between objects (code) and tables (relational DB).</div></div>
+   <div class="vocab"><div class="vt">ORM</div><div class="vd">Object-relational mapper — hides the mismatch but never removes it fully.</div></div>
+   <div class="vocab"><div class="vt">Normalization</div><div class="vd">Storing data once and referencing it by ID to remove duplication.</div></div>
+   <div class="vocab"><div class="vt">Locality</div><div class="vd">Keeping related data physically together — the document model's big win.</div></div>
+   <div class="vocab"><div class="vt">Schema-on-write</div><div class="vd">Schema enforced at write time (relational). Like static typing.</div></div>
+   <div class="vocab"><div class="vt">Schema-on-read</div><div class="vd">Structure assumed only at read (document). Like dynamic typing.</div></div>
+ </div>
+ <h4>Querying</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Declarative query</div><div class="vd">Says WHAT you want (SQL); the optimizer decides how.</div></div>
+   <div class="vocab"><div class="vt">Imperative query</div><div class="vd">Step-by-step HOW. Harder to optimize and parallelize.</div></div>
+   <div class="vocab"><div class="vt">Query optimizer</div><div class="vd">The engine that turns a declarative query into an efficient plan.</div></div>
+   <div class="vocab"><div class="vt">MapReduce</div><div class="vd">Query via two pure functions — map (emit) then reduce (combine).</div></div>
+ </div>
+ <h4>Graph languages</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Property graph</div><div class="vd">Vertices/edges with IDs, labels, and key-value properties (Neo4j).</div></div>
+   <div class="vocab"><div class="vt">Cypher</div><div class="vd">Neo4j's declarative graph query language; you draw the pattern.</div></div>
+   <div class="vocab"><div class="vt">Triple-store</div><div class="vd">Data as (subject, predicate, object) facts. Basis of RDF.</div></div>
+   <div class="vocab"><div class="vt">SPARQL</div><div class="vd">Query language for RDF triple-stores.</div></div>
+   <div class="vocab"><div class="vt">Datalog</div><div class="vd">Foundational rules-and-facts query model; composable and powerful.</div></div>
+ </div>`}
+];
+
+const QUIZ=[
+ {q:"Your app stores résumés — each with positions, education, contact info, mostly read as a whole. Which model fits best?",
+  opts:["Relational, split across many tables","Document — one self-contained tree","Graph with thousands of edges","None can store this"],correct:1,
+  ex:"A résumé is a self-contained <strong>tree</strong> (one-to-many). The document model matches the object, gives locality, and avoids joins."},
+ {q:"Why did the relational model beat the hierarchical/network models decades ago?",
+  opts:["It was faster on every query","The query optimizer chose access paths, so you didn't navigate them by hand","It used less disk","It had no schema"],correct:1,
+  ex:"The relational model let the <strong>optimizer</strong> pick access paths. The network model forced you to navigate paths manually and made structural change painful."},
+ {q:"What's the main advantage of a declarative query language like SQL?",
+  opts:["It's shorter to type","The engine can optimize and parallelize without you rewriting queries","It can't have bugs","It only works on one machine"],correct:1,
+  ex:"Because you say WHAT not HOW, the engine is free to add indexes, reorder, and parallelize — your query speeds up without changes."},
+ {q:"You're modelling a social network: friends-of-friends, variable-depth connections. Best fit?",
+  opts:["Document model","Graph model","Flat CSV","Key-value cache"],correct:1,
+  ex:"Heavy many-to-many, variable-depth traversal is exactly what the <strong>graph</strong> model (property graph + Cypher) is built for. SQL would need painful recursive queries."}
+];
+
+function initExtra(){
+  const sel=document.getElementById('shapeSel');
+  const out=document.getElementById('modelOut');
+  if(!sel)return;
+  const REC={
+    tree:["Document model","Self-contained one-to-many data has locality and matches your objects. MongoDB / a JSON column fits well.","co-win"],
+    ref:["Relational model","Shared references (many-to-one) want normalization + joins — relational's home turf. Avoid duplicating the shared value.","co-note"],
+    web:["Graph model","Many-to-many, variable-depth connections want vertices + edges. Reach for Neo4j / a property graph.","co-win"],
+    mixed:["Relational model","Uniform records plus heavy reporting and joins = classic relational (PostgreSQL). Schema-on-write keeps it clean.","co-note"]
+  };
+  const upd=()=>{const r=REC[sel.value];
+    out.innerHTML=`<div class="callout ${r[2]}"><span class="co-tag">Recommended</span><p><strong>${r[0]}.</strong> ${r[1]}</p></div>`;};
+  sel.addEventListener('change',upd);upd();
+}
+
+
+const tabBar=document.getElementById('tabBar');
+const main=document.getElementById('main');
+DATA.forEach((s,i)=>{
+  const btn=document.createElement('button');
+  btn.className='tab-btn'+(i===0?' active':'');
+  btn.textContent=s.tab; btn.onclick=()=>showTab(i); tabBar.appendChild(btn);
+  const panel=document.createElement('section');
+  panel.className='tab-panel'+(i===0?' active':''); panel.id='panel-'+i;
+  panel.innerHTML=`<div class="stage"><div class="container"><div class="stage-header"><div class="stage-num-big">${s.num}</div><div><div class="stage-title">${s.title}</div><div class="stage-kicker">${s.kicker}</div></div></div><div class="body-wrap"><div class="spacer"></div><div class="prose">${s.body}</div></div></div></div>`;
+  main.appendChild(panel);
+});
+function showTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  window.scrollTo({top:document.querySelector('.tabs').offsetTop-60,behavior:'smooth'});
+}
+const overlay=document.getElementById('overlay');
+function openSnip(key){const s=SNIPPETS[key];if(!s)return;
+  document.getElementById('mCat').textContent=s.cat;
+  document.getElementById('mQ').textContent=s.title;
+  document.getElementById('mBody').innerHTML=s.body;
+  overlay.classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('closeBtn').onclick=closeModal;
+overlay.onclick=e=>{if(e.target===overlay)closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+// dropdown
+const drop=document.getElementById('chDrop');
+document.getElementById('chDropBtn').onclick=e=>{e.stopPropagation();drop.classList.toggle('open');};
+document.addEventListener('click',()=>drop.classList.remove('open'));
+// generic quiz mounter: window.QUIZ + #quizMount
+function mountQuiz(){
+  if(typeof QUIZ==='undefined')return;
+  const qm=document.getElementById('quizMount'); if(!qm)return;
+  QUIZ.forEach((item,qi)=>{
+    const box=document.createElement('div');box.className='quiz';
+    let html=`<div class="q">${qi+1}. ${item.q}</div>`;
+    item.opts.forEach((o,oi)=>{html+=`<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`;});
+    html+=`<div class="explain" id="ex-${qi}">${item.ex}</div>`;
+    box.innerHTML=html;qm.appendChild(box);
+  });
+  qm.addEventListener('click',e=>{
+    const b=e.target.closest('.opt');if(!b)return;
+    const box=b.closest('.quiz');if(box.dataset.done)return;box.dataset.done='1';
+    const qi=+b.dataset.q,oi=+b.dataset.o,correct=QUIZ[qi].correct;
+    box.querySelectorAll('.opt').forEach((opt,idx)=>{
+      if(idx===correct)opt.classList.add('correct');else if(idx===oi)opt.classList.add('wrong');
+      opt.style.cursor='default';});
+    document.getElementById('ex-'+qi).classList.add('show');
+  });
+}
+mountQuiz();
+if(typeof initExtra==='function'){try{initExtra();}catch(e){console.error(e);}}
+
+</script>
+</body>
+</html>

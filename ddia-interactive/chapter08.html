@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDIA · 08 — The Trouble with Distributed Systems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,800;9..144,900&family=JetBrains+Mono:wght@400;500;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#09090e;--ink:#f4f1ea;--ink-dim:#aba7b9;--ink-faint:#5f5a72;
+  --sky:#0ea5e9;--emerald:#10b981;--indigo:#6366f1;--violet:#8b5cf6;--amber:#f59e0b;--rose:#f43f5e;
+  --card-bg:rgba(255,255,255,.03);--card-border:rgba(255,255,255,.08);--panel:rgba(255,255,255,.02);--accent:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter Tight',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;overflow-x:hidden;background-color:#08080c;
+  background-image:radial-gradient(circle at 15% 50%, rgba(139,92,246,.08), transparent 25%),radial-gradient(circle at 85% 30%, rgba(99,102,241,.08), transparent 25%);background-attachment:fixed;}
+.container{max-width:1180px;margin:0 auto;padding:0 32px;position:relative;z-index:2}
+.display{font-family:'Fraunces',serif;font-weight:900;letter-spacing:-.04em;line-height:.95}
+.label{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--ink-dim)}
+
+/* ===== top site nav ===== */
+.sitenav{position:sticky;top:0;z-index:120;background:rgba(8,8,12,.93);backdrop-filter:blur(16px);border-bottom:1px solid var(--card-border)}
+.sitenav-inner{max-width:1180px;margin:0 auto;padding:12px 32px;display:flex;align-items:center;gap:18px}
+.brand{font-family:'Fraunces',serif;font-weight:800;font-size:16px;letter-spacing:-.02em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand em{font-style:italic;font-weight:300;color:var(--violet)}
+.nav-spacer{flex:1}
+.nav-prevnext{display:flex;gap:8px}
+.nav-prevnext a{font:600 11px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border:1px solid var(--card-border);border-radius:5px;color:var(--ink-dim);text-decoration:none;transition:all .18s}
+.nav-prevnext a:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.nav-prevnext a.disabled{opacity:.3;pointer-events:none}
+.dropdown{position:relative}
+.dropbtn{font:600 12px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;color:#e7e1ff;cursor:pointer;display:flex;align-items:center;gap:8px}
+.dropbtn .chev{transition:transform .2s}
+.dropdown.open .chev{transform:rotate(180deg)}
+.dropmenu{position:absolute;top:calc(100% + 8px);left:0;min-width:340px;max-height:70vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 30%,var(--card-border));border-radius:10px;padding:8px;box-shadow:0 24px 70px rgba(0,0,0,.6);display:none;z-index:130}
+.dropdown.open .dropmenu{display:block;animation:fadeIn .2s ease}
+.dropmenu a{display:flex;gap:12px;align-items:baseline;padding:10px 12px;border-radius:7px;text-decoration:none;color:var(--ink-dim);transition:all .15s}
+.dropmenu a:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+.dropmenu a.cur{background:color-mix(in srgb,var(--accent) 16%,transparent);color:#fff}
+.dropmenu a .dn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--violet);flex:0 0 26px}
+.dropmenu a .dt{font-size:14.5px;font-weight:400;line-height:1.3}
+.dropmenu .part{font:700 9.5px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);padding:12px 12px 6px}
+
+/* hero */
+.hero{min-height:86vh;display:flex;flex-direction:column;justify-content:center;padding:70px 0 60px;position:relative}
+.hero .stage-num{font-family:'Fraunces',serif;font-style:italic;font-weight:300;font-size:14px;color:var(--ink-faint);margin-bottom:24px}
+.hero h1{font-size:clamp(42px,7.6vw,88px);margin-bottom:28px;background:linear-gradient(135deg,var(--violet),var(--indigo),var(--sky));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero h1 em{font-style:italic;font-weight:300;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+.hero .sub{font-size:clamp(18px,2.2vw,22px);max-width:880px;color:var(--ink-dim);margin-bottom:48px;font-weight:300}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1040px}
+.stat{border-left:2px solid var(--card-border);padding-left:16px}
+.stat .num{font-family:'Fraunces',serif;font-size:32px;font-weight:800;letter-spacing:-.03em}
+.stat .label{margin-top:4px}
+
+/* tabs */
+.tabs{position:sticky;top:57px;z-index:50;background:rgba(8,8,12,.91);backdrop-filter:blur(14px);border-bottom:1px solid var(--card-border);padding:14px 0}
+.tabs-inner{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.tab-btn{font:600 11.5px 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:4px;color:var(--ink-dim);cursor:pointer;transition:all .2s}
+.tab-btn:hover{color:var(--ink);background:rgba(255,255,255,.055)}
+.tab-btn.active{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* stage */
+.stage{padding:64px 0 84px;border-top:1px solid var(--card-border)}
+.stage-header{display:grid;grid-template-columns:80px 1fr;gap:24px;margin-bottom:36px;align-items:start}
+.stage-num-big{font-family:'Fraunces',serif;font-style:italic;font-size:60px;line-height:1;color:var(--accent);font-weight:300}
+.stage-title{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.03em;line-height:1.05;margin-bottom:12px}
+.stage-kicker{font-size:17px;color:var(--ink-dim);font-weight:300;max-width:870px}
+
+/* body */
+.body-wrap{display:grid;grid-template-columns:80px 1fr;gap:24px}
+.prose{max-width:880px}
+.prose h3{font-family:'Fraunces',serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:34px 0 14px;color:var(--ink)}
+.prose h3:first-child{margin-top:0}
+.prose h4{font:700 12px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:28px 0 12px}
+.prose p{font-size:16.5px;color:var(--ink-dim);font-weight:300;line-height:1.72;margin-bottom:15px}
+.prose p strong{color:var(--ink);font-weight:600}
+.prose ul{list-style:none;margin:6px 0 18px}
+.prose li{font-size:16px;color:var(--ink-dim);font-weight:300;line-height:1.65;padding-left:22px;position:relative;margin-bottom:9px}
+.prose li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.prose li strong{color:var(--ink);font-weight:600}
+code.inl{font-family:'JetBrains Mono',monospace;font-size:13.5px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22);border-radius:4px;padding:2px 6px;color:#d6ccff}
+
+/* callouts */
+.callout{border-radius:8px;padding:18px 20px;margin:22px 0;border:1px solid;backdrop-filter:blur(8px);font-size:15.5px;font-weight:300;line-height:1.65}
+.callout .co-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;display:block}
+.callout p{margin:0 0 8px;font-size:15.5px;color:var(--ink-dim)}
+.callout p:last-child{margin-bottom:0}
+.callout strong{color:var(--ink);font-weight:600}
+.co-trap{background:rgba(244,63,94,.07);border-color:rgba(244,63,94,.3)}.co-trap .co-tag{color:var(--rose)}
+.co-note{background:rgba(14,165,233,.06);border-color:rgba(14,165,233,.28)}.co-note .co-tag{color:var(--sky)}
+.co-cost{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.3)}.co-cost .co-tag{color:var(--amber)}
+.co-win{background:rgba(16,185,129,.06);border-color:rgba(16,185,129,.28)}.co-win .co-tag{color:var(--emerald)}
+
+/* vocab */
+.vocab-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0 8px}
+.vocab{background:var(--card-bg);border:1px solid var(--card-border);border-left:3px solid var(--accent);border-radius:6px;padding:16px 18px}
+.vocab .vt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;color:#d6ccff;margin-bottom:6px}
+.vocab .vd{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.55}
+
+/* concept cards -> modal */
+.code-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0}
+.code-card{display:flex;align-items:center;gap:13px;background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-left:3px solid var(--sky);border-radius:6px;padding:16px 18px;cursor:pointer;transition:all .18s}
+.code-card:hover{background:rgba(255,255,255,.05);transform:translateY(-2px);border-left-color:var(--violet)}
+.code-card .cc-ico{font:700 14px 'JetBrains Mono',monospace;color:var(--sky);flex:0 0 auto}
+.code-card .cc-t{font-size:15px;color:var(--ink);font-weight:500;line-height:1.3}
+.code-card .cc-s{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+.code-card .cc-go{margin-left:auto;font:700 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);flex:0 0 auto}
+.code-card:hover .cc-go{color:var(--violet)}
+
+/* code block */
+.codeblock{background:#0c0c13;border:1px solid var(--card-border);border-radius:8px;margin:18px 0;overflow:hidden}
+.codeblock .cb-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--card-border);background:rgba(255,255,255,.015)}
+.codeblock .cb-title{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.codeblock pre{margin:0;padding:16px 18px;overflow-x:auto}
+.codeblock code{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;color:#cfd3e0;white-space:pre}
+.cmt{color:#6a6a85}.kw{color:#c4b5fd}.str{color:#7fd4a0}.flg{color:#7cc5f0}
+
+/* table */
+.cmp{width:100%;border-collapse:collapse;margin:20px 0;font-size:14.5px}
+.cmp th,.cmp td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--card-border)}
+.cmp th{font:700 10.5px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+.cmp td{color:var(--ink-dim);font-weight:300}
+.cmp td:first-child{color:var(--ink);font-weight:500}
+.cmp tr:hover td{background:rgba(255,255,255,.02)}
+.yes{color:var(--emerald);font-weight:600}.no{color:var(--rose);font-weight:600}
+
+/* diagram */
+.diagram{background:rgba(13,13,20,.6);border:1px solid var(--card-border);border-radius:10px;padding:26px 22px;margin:22px 0}
+.diagram .dg-cap{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);text-align:center;margin-top:16px}
+.flow{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
+.node{background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);border-radius:6px;padding:11px 15px;font:600 13px 'Inter Tight',sans-serif;color:var(--ink);text-align:center;min-width:96px}
+.node.sky{background:rgba(14,165,233,.13);border-color:rgba(14,165,233,.34)}
+.node.em{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.32)}
+.node.am{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.32)}
+.node.ro{background:rgba(244,63,94,.13);border-color:rgba(244,63,94,.36)}
+.arrow{color:var(--ink-faint);font-size:18px}
+.box-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.mbox{flex:1;min-width:150px;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.mbox .mb-t{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.mbox .mb-d{font-size:13px;color:var(--ink-dim);font-weight:300}
+
+/* quiz */
+.quiz{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:22px 24px;margin:18px 0}
+.quiz .q{font-size:16.5px;color:var(--ink);font-weight:500;margin-bottom:14px}
+.quiz .opt{display:block;width:100%;text-align:left;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:12px 16px;margin-bottom:9px;color:var(--ink-dim);font-size:15px;cursor:pointer;transition:all .15s;font-family:'Inter Tight',sans-serif}
+.quiz .opt:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+.quiz .opt.correct{border-color:var(--emerald);background:rgba(16,185,129,.12);color:var(--ink)}
+.quiz .opt.wrong{border-color:var(--rose);background:rgba(244,63,94,.1)}
+.quiz .explain{font-size:14.5px;color:var(--ink-dim);font-weight:300;line-height:1.6;margin-top:10px;padding-top:12px;border-top:1px solid var(--card-border);display:none}
+.quiz .explain.show{display:block}.quiz .explain strong{color:var(--ink)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,4,8,.82);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex;animation:fadeIn .25s ease}
+.modal{max-width:820px;width:100%;max-height:88vh;overflow-y:auto;background:#0b0b12;border:1px solid color-mix(in srgb,var(--accent) 34%,var(--card-border));border-radius:10px;padding:34px 36px 30px;position:relative;box-shadow:0 30px 90px rgba(0,0,0,.65);}
+.modal .m-cat{font:700 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.modal .m-q{font-family:'Fraunces',serif;font-weight:800;font-size:26px;line-height:1.15;letter-spacing:-.02em;margin-bottom:6px}
+.modal .m-hint{font:600 10px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:20px}
+.modal .m-body{font-size:15.5px;color:var(--ink-dim);font-weight:300;line-height:1.68}
+.modal .m-body p{margin-bottom:13px}.modal .m-body strong{color:var(--ink);font-weight:600}
+.modal .m-body ul{list-style:none;margin:6px 0 14px}
+.modal .m-body li{padding-left:22px;position:relative;margin-bottom:8px}
+.modal .m-body li::before{content:"→";position:absolute;left:0;color:var(--accent);font-weight:700}
+.modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:1px solid var(--card-border);background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2}
+.modal-close:hover{color:#fff;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 20%,transparent)}
+
+.foot{padding:50px 0 80px;text-align:center;border-top:1px solid var(--card-border);color:var(--ink-faint);font-size:14px}
+
+@media(max-width:900px){
+  .stats,.vocab-grid,.code-cards{grid-template-columns:1fr}
+  .stage-header,.body-wrap{grid-template-columns:1fr}
+  .dropmenu{min-width:280px}
+  .nav-prevnext{display:none}
+  .modal{padding:28px 22px 24px}
+  .cmp{font-size:13px}.cmp th,.cmp td{padding:10px 10px}
+  .tabs{top:55px}
+}
+
+/* ===== interactive widgets (shared) ===== */
+.widget{background:rgba(13,13,20,.7);border:1px solid var(--card-border);border-radius:10px;padding:24px;margin:24px 0}
+.widget .w-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--violet);margin-bottom:6px}
+.widget .w-title{font-family:'Fraunces',serif;font-weight:800;font-size:20px;letter-spacing:-.02em;margin-bottom:16px;color:var(--ink)}
+.widget label{display:block;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px}
+.widget input[type=range]{width:100%;accent-color:var(--violet);margin-bottom:6px}
+.widget .w-val{font-family:'JetBrains Mono',monospace;color:#d6ccff;font-weight:700}
+.widget select{background:#11111a;color:var(--ink);border:1px solid var(--card-border);border-radius:6px;padding:9px 12px;font-family:'Inter Tight',sans-serif;font-size:14px;margin-bottom:10px}
+.w-out{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.w-out .wo{background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:8px;padding:14px;text-align:center}
+.w-out .wo .wo-n{font-family:'Fraunces',serif;font-weight:800;font-size:26px;letter-spacing:-.02em;color:var(--ink)}
+.w-out .wo .wo-l{font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
+.w-btn{display:inline-block;width:auto;background:rgba(255,255,255,.025);border:1px solid var(--card-border);border-radius:7px;padding:8px 16px;color:var(--ink-dim);font:600 12px 'JetBrains Mono',monospace;cursor:pointer;transition:all .15s;margin-top:8px}
+.w-btn:hover{background:rgba(255,255,255,.07);color:var(--ink);border-color:var(--accent)}
+.pbars{display:flex;align-items:flex-end;gap:2px;height:120px;margin:10px 0 4px}
+.pbar{flex:1;background:rgba(139,92,246,.25);border-radius:2px 2px 0 0;transition:background .2s}
+.pbar.p50{background:var(--emerald)}.pbar.p95{background:var(--amber)}.pbar.p99{background:var(--rose)}
+.pleg{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font:600 11px 'JetBrains Mono',monospace}
+.pleg span{display:flex;align-items:center;gap:6px;color:var(--ink-dim)}
+.pleg i{width:11px;height:11px;border-radius:2px;display:inline-block}
+@media(max-width:900px){.w-out{grid-template-columns:1fr}}
+</style>
+</head>
+<body style="--accent:var(--violet)">
+<nav class="sitenav">
+  <div class="sitenav-inner">
+    <a class="brand" href="index.html">DDIA <em>interactive</em></a>
+    <div class="dropdown" id="chDrop">
+      <button class="dropbtn" id="chDropBtn">Chapters <span class="chev">▾</span></button>
+      <div class="dropmenu"><div class="part">Part I · Foundations of Data Systems</div><a class="" href="chapter01.html"><span class="dn">01</span><span class="dt">Reliable, Scalable & Maintainable</span></a><a class="" href="chapter02.html"><span class="dn">02</span><span class="dt">Data Models & Query Languages</span></a><a class="" href="chapter03.html"><span class="dn">03</span><span class="dt">Storage & Retrieval</span></a><a class="" href="chapter04.html"><span class="dn">04</span><span class="dt">Encoding & Evolution</span></a><div class="part">Part II · Distributed Data</div><a class="" href="chapter05.html"><span class="dn">05</span><span class="dt">Replication</span></a><a class="" href="chapter06.html"><span class="dn">06</span><span class="dt">Partitioning</span></a><a class="" href="chapter07.html"><span class="dn">07</span><span class="dt">Transactions</span></a><a class="cur" href="chapter08.html"><span class="dn">08</span><span class="dt">The Trouble with Distributed Systems</span></a><a class="" href="chapter09.html"><span class="dn">09</span><span class="dt">Consistency & Consensus</span></a><div class="part">Part III · Derived Data</div><a class="" href="chapter10.html"><span class="dn">10</span><span class="dt">Batch Processing</span></a><a class="" href="chapter11.html"><span class="dn">11</span><span class="dt">Stream Processing</span></a><a class="" href="chapter12.html"><span class="dn">12</span><span class="dt">The Future of Data Systems</span></a></div>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-prevnext"><a href="glossary.html">Dictionary</a><a href="chapter07.html">← Prev</a><a href="chapter09.html">Next →</a></div>
+  </div>
+</nav>
+<section class="hero"><div class="container">
+  <div class="stage-num">DDIA · Chapter 8 · Part II — Distributed Data</div>
+  <h1 class="display">The <em>Trouble</em> with<br>Distributed<br>Systems</h1>
+  <p class="sub">The reality check. Networks drop and delay messages, clocks lie, processes pause without warning — and you can't tell a slow node from a dead one. Everything fails partially, all the time.</p>
+  <div class="stats"><div class="stat"><div class="num">3</div><div class="label">unreliables</div></div><div class="stat"><div class="num">6</div><div class="label">sections</div></div><div class="stat"><div class="num">1</div><div class="label">live widget</div></div><div class="stat"><div class="num">click</div><div class="label">for deep dives</div></div></div>
+</div></section>
+<nav class="tabs"><div class="container"><div class="tabs-inner" id="tabBar"></div></div></nav>
+<main id="main"></main>
+<div class="foot container">In a distributed system, anything that can go wrong will — networks, clocks, and pauses are all unreliable. You can't trust any single node's view; truth comes from a majority. Build assuming partial failure.</div>
+<div class="modal-overlay" id="overlay"><div class="modal" id="modal">
+  <button class="modal-close" id="closeBtn" aria-label="Close">&times;</button>
+  <div class="m-cat" id="mCat"></div><div class="m-q" id="mQ"></div>
+  <div class="m-hint" id="mHint">Deep dive — explained simply</div>
+  <div class="m-body" id="mBody"></div>
+</div></div>
+<script>
+const SNIPPETS={
+  partial:{cat:"Distributed troubles · Faults",title:"Partial failure — the core problem",
+   body:`<p>A single computer is reassuringly deterministic: it either works or it crashes completely. A distributed system has a third, nasty state — <strong>partial failure</strong>: some parts work, some don't, and you often can't tell which.</p>
+   <ul>
+     <li>Worse, partial failures are <strong>nondeterministic</strong> — the same operation may succeed, fail, or hang, unpredictably.</li>
+     <li>This is the defining difficulty of distributed systems. You must <strong>build reliability out of unreliable parts</strong>.</li>
+   </ul>
+   <div class="callout co-note"><span class="co-tag">Mindset</span><p>Stop assuming things work. Assume anything that <em>can</em> fail <em>will</em> — networks, clocks, other nodes — and design so the system keeps its promises anyway.</p></div>`},
+
+  network:{cat:"Distributed troubles · Networks",title:"Unreliable networks",
+   body:`<p>Most distributed systems use asynchronous packet networks. A message you send can be lost, delayed, duplicated, or reordered — with no guarantee and no bound on delay.</p>
+   <p>The killer: you send a request and get <strong>no reply</strong>. You cannot tell which happened:</p>
+   <ul>
+     <li>The request was lost.</li>
+     <li>The remote node is down.</li>
+     <li>The node processed it but the reply was lost.</li>
+     <li>Everything's fine but slow, and the reply is still coming.</li>
+   </ul>
+   <p>From the sender's side these are <strong>indistinguishable</strong>. All you can do is wait — and at some point give up with a <strong>timeout</strong>.</p>`},
+
+  timeout:{cat:"Distributed troubles · Timeouts",title:"Detecting faults & choosing timeouts",
+   body:`<p>Since you can't directly tell a dead node from a slow one, you guess with a timeout. But the delay has <strong>no upper bound</strong>, so any timeout is a gamble:</p>
+   <table class="cmp"><tr><th>Timeout</th><th>Risk</th></tr>
+   <tr><td>Too short</td><td>False positives — a healthy-but-slow node is declared dead, work gets duplicated, the problem cascades</td></tr>
+   <tr><td>Too long</td><td>Slow detection — users wait a long time before the system reacts to a real failure</td></tr></table>
+   <p>This is why a <strong>synchronous</strong> network (bounded delay, like old circuit-switched phone lines) would make life easier — but the internet is <strong>asynchronous</strong> and packet-switched, optimised for bursty traffic, not bounded latency. Unbounded delay is the price.</p>`},
+
+  clocks:{cat:"Distributed troubles · Clocks",title:"Unreliable clocks",
+   body:`<p>Each machine has its own clock, synced imperfectly over NTP. Two very different kinds:</p>
+   <ul>
+     <li><strong>Time-of-day clock</strong> — wall-clock time. Can <em>jump backward</em> when NTP corrects it. Never use it to measure durations.</li>
+     <li><strong>Monotonic clock</strong> — only ever moves forward. Use it for elapsed time / timeouts.</li>
+   </ul>
+   <div class="callout co-trap"><span class="co-tag">The danger</span><p>Relying on synchronized timestamps for ordering — e.g. <strong>last-write-wins</strong> using wall-clock time — silently loses data when clocks disagree by even a few milliseconds. For ordering, prefer <strong>logical clocks</strong> (counters), not physical time.</p></div>`},
+
+  pauses:{cat:"Distributed troubles · Pauses",title:"Process pauses",
+   body:`<p>A running process can freeze, without warning, for a long time:</p>
+   <ul>
+     <li><strong>Garbage-collection pauses</strong> can stop the world for seconds.</li>
+     <li>A VM can be <strong>suspended and resumed</strong> (live migration) — the process has no idea time passed.</li>
+     <li>Swapping, long disk I/O, or the laptop lid closing all do it.</li>
+   </ul>
+   <p>So a node holding a time-based <strong>lease</strong> ("I'm leader for 10 seconds") might pause past its expiry, wake up still believing it's leader, and act on stale authority — corrupting data.</p>`},
+
+  truth:{cat:"Distributed troubles · Truth",title:"Knowledge, truth & lies",
+   body:`<p>Because a node can't trust its own view (it might be the one that's paused or partitioned), you can't let any single node be the authority. Instead:</p>
+   <ul>
+     <li><strong>The truth is defined by the majority.</strong> Decisions need a <strong>quorum</strong> of nodes to agree, so one misbehaving node can't act alone.</li>
+     <li><strong>Fencing tokens</strong> — every time a lock is granted, hand out an increasing number. Storage rejects any write carrying an old token, so a paused-then-resumed leader can't do damage.</li>
+     <li><strong>Byzantine faults</strong> — nodes that lie or behave maliciously. Tolerating them is expensive; most datacenter systems assume nodes are honest-but-may-crash (non-Byzantine).</li>
+   </ul>
+   <div class="callout co-win"><span class="co-tag">Takeaway</span><p>Never trust one node — not even yourself. Build agreement from a majority, and use fencing tokens so stale actors are harmlessly rejected.</p></div>`}
+};
+
+const DATA=[
+{num:"00",tab:"Partial failure",title:"Everything fails, partially, all the time",
+ kicker:"The reality check chapter. One computer is predictable. Many computers talking over a network are not.",
+ body:`
+ <h3>Why distributed is different</h3>
+ <p>On one machine, an operation works or the machine crashes — clean. Across many machines, you get <strong>partial failure</strong>: some nodes and links work while others fail, nondeterministically, and you can't always tell which. That ambiguity is the heart of every distributed-systems problem.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('partial')"><span class="cc-ico">{ }</span><div><div class="cc-t">Partial failure</div><div class="cc-s">the defining difficulty</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="box-row">
+   <div class="mbox"><div class="mb-t">Networks</div><div class="mb-d">Lose, delay, reorder messages. No bound on delay.</div></div>
+   <div class="mbox"><div class="mb-t">Clocks</div><div class="mb-d">Drift and jump. Can't be trusted for ordering.</div></div>
+   <div class="mbox"><div class="mb-t">Processes</div><div class="mb-d">Pause without warning (GC, VM suspend).</div></div>
+ </div>
+ <div class="callout co-win"><span class="co-tag">Chapter in one line</span><p>Assume <strong>partial failure</strong>. Don't trust any single node's view of the world — truth comes from a <strong>majority</strong>.</p></div>`},
+
+{num:"01",tab:"Unreliable networks",title:"The network will betray you",
+ kicker:"Send a request, get no reply. You literally cannot tell what went wrong.",
+ body:`
+ <h3>The fundamental ambiguity</h3>
+ <p>No reply could mean the request was lost, the node is dead, the reply was lost, or it's all just slow. These are indistinguishable from the sender's side — so you wait, then time out and guess.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('network')"><span class="cc-ico">{ }</span><div><div class="cc-t">Unreliable networks</div><div class="cc-s">the four possibilities</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('timeout')"><span class="cc-ico">{ }</span><div><div class="cc-t">Detecting faults & timeouts</div><div class="cc-s">the impossible guess</div></div><span class="cc-go">view →</span></div>
+ </div>
+
+ <div class="widget">
+   <div class="w-tag">Try it</div>
+   <div class="w-title">A request got no reply — what happened?</div>
+   <label>Pick what you'd like to conclude</label>
+   <select id="netSel">
+     <option value="dead">"The node is definitely dead"</option>
+     <option value="lost">"My request definitely didn't arrive"</option>
+     <option value="done">"It definitely didn't run"</option>
+     <option value="retry">"I'll just retry — that's always safe"</option>
+   </select>
+   <div id="netOut" style="margin-top:8px"></div>
+ </div>`},
+
+{num:"02",tab:"Clocks & pauses",title:"Unreliable clocks & process pauses",
+ kicker:"Time is a lie in distributed systems — and your process can freeze without knowing it.",
+ body:`
+ <h3>Two clocks, one trap</h3>
+ <p>Monotonic clocks (for durations) only go forward. Time-of-day clocks (wall time) can jump backward when NTP corrects them. Using wall-clock timestamps to order events — like last-write-wins — quietly loses data.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('clocks')"><span class="cc-ico">{ }</span><div><div class="cc-t">Unreliable clocks</div><div class="cc-s">monotonic vs time-of-day</div></div><span class="cc-go">view →</span></div>
+   <div class="code-card" onclick="openSnip('pauses')"><span class="cc-ico">{ }</span><div><div class="cc-t">Process pauses</div><div class="cc-s">GC, VM suspend, stale leases</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="callout co-trap"><span class="co-tag">Two classic bugs</span><p>(1) <strong>LWW by wall clock</strong> loses writes when clocks disagree. (2) A node that <strong>pauses past its lease</strong> wakes up thinking it's still leader. Both come from trusting time.</p></div>`},
+
+{num:"03",tab:"Truth & lies",title:"Knowledge, truth and lies",
+ kicker:"If a node can't trust its own view, who decides what's true? The majority.",
+ body:`
+ <h3>Truth by majority</h3>
+ <p>Any node might be the one that's partitioned or paused — so no node can be trusted as sole authority. Decisions require a <strong>quorum</strong>, and <strong>fencing tokens</strong> stop a stale node from acting on old authority.</p>
+ <div class="code-cards">
+   <div class="code-card" onclick="openSnip('truth')"><span class="cc-ico">{ }</span><div><div class="cc-t">Knowledge, truth & lies</div><div class="cc-s">quorums, fencing tokens, Byzantine</div></div><span class="cc-go">view →</span></div>
+ </div>
+ <div class="diagram"><div class="flow">
+   <div class="node am">Lock granted: token 33</div><span class="arrow">→</span>
+   <div class="node ro">Paused leader writes token 33</div><span class="arrow">✗ rejected</span>
+   <div class="node em">Storage saw token 34 already</div>
+ </div><div class="dg-cap">Fencing tokens: storage rejects any write with a stale token</div></div>
+ <div class="callout co-note"><span class="co-tag">Byzantine</span><p>Nodes that actively lie are <strong>Byzantine faults</strong>. Tolerating them (aerospace, blockchains) is costly; typical datacenter systems assume honest-but-crashing nodes.</p></div>
+
+ <h3>Self-check</h3>
+ <div id="quizMount"></div>`},
+
+{num:"04",tab:"Glossary",title:"Glossary — Chapter 8",
+ kicker:"Every key term. Define each plainly and you own the chapter.",
+ body:`
+ <h4>Failure</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Partial failure</div><div class="vd">Some parts of the system work while others fail, nondeterministically.</div></div>
+   <div class="vocab"><div class="vt">Shared-nothing</div><div class="vd">Independent nodes connected only by a network — the common cloud architecture.</div></div>
+ </div>
+ <h4>Networks</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Asynchronous network</div><div class="vd">No bound on message delay; packets may be lost/delayed/reordered (the internet).</div></div>
+   <div class="vocab"><div class="vt">Timeout</div><div class="vd">How long you wait before deciding a node failed — always an unreliable guess.</div></div>
+   <div class="vocab"><div class="vt">False positive (failure)</div><div class="vd">Declaring a healthy-but-slow node dead because the timeout was too short.</div></div>
+   <div class="vocab"><div class="vt">Unbounded delay</div><div class="vd">No maximum on how long a message can take — why timeouts are guesses.</div></div>
+ </div>
+ <h4>Clocks & pauses</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Time-of-day clock</div><div class="vd">Wall-clock time; can jump backward on NTP sync. Bad for durations/ordering.</div></div>
+   <div class="vocab"><div class="vt">Monotonic clock</div><div class="vd">Only moves forward; use it for elapsed time and timeouts.</div></div>
+   <div class="vocab"><div class="vt">Clock skew</div><div class="vd">Difference between two machines' clocks — breaks timestamp ordering.</div></div>
+   <div class="vocab"><div class="vt">Process pause</div><div class="vd">A node freezing (GC, VM suspend) without realising time has passed.</div></div>
+   <div class="vocab"><div class="vt">Lease</div><div class="vd">A time-limited grant (e.g. leadership); dangerous if a pause outlasts it.</div></div>
+ </div>
+ <h4>Truth</h4>
+ <div class="vocab-grid">
+   <div class="vocab"><div class="vt">Quorum</div><div class="vd">A majority of nodes agreeing — the basis of "truth" no single node can override.</div></div>
+   <div class="vocab"><div class="vt">Fencing token</div><div class="vd">An increasing number on each lock grant; storage rejects stale tokens.</div></div>
+   <div class="vocab"><div class="vt">Byzantine fault</div><div class="vd">A node that lies or acts maliciously, not just crashes.</div></div>
+   <div class="vocab"><div class="vt">System model</div><div class="vd">Assumptions about timing and faults (synchronous, partial, asynchronous; crash vs Byzantine).</div></div>
+ </div>`}
+];
+
+const QUIZ=[
+ {q:"You send a request to another node and get no response. What can you conclude?",
+  opts:["The node is dead","Your request was lost","Nothing for certain — it could be any of several causes","The reply will never come"],correct:2,
+  ex:"Request lost, node down, reply lost, or just slow — all look identical from your side. You can't distinguish them, only time out and guess."},
+ {q:"Why is using wall-clock (time-of-day) timestamps for last-write-wins dangerous?",
+  opts:["Timestamps are too large","Clocks drift/jump, so a 'later' write may have an earlier timestamp and silently win — losing data","It's too slow","Wall clocks don't exist on servers"],correct:1,
+  ex:"Even small clock skew means timestamps don't reflect true order. LWW then discards the wrong write. Use <strong>logical clocks</strong> for ordering, not physical time."},
+ {q:"A leader node hits a 20-second GC pause, then resumes. Why is this dangerous?",
+  opts:["It loses its memory","It may still think it holds a now-expired lease and act as leader","It speeds up","Nothing — pauses are harmless"],correct:1,
+  ex:"The paused node didn't notice time passing. Its lease expired and another leader was elected, but it wakes up still acting as leader. <strong>Fencing tokens</strong> stop its stale writes."},
+ {q:"In a non-Byzantine distributed system, how is 'truth' decided?",
+  opts:["By the fastest node","By a majority (quorum) of nodes agreeing","By the leader alone","By the client"],correct:1,
+  ex:"No single node can be trusted (it might be the partitioned/paused one). Decisions need a <strong>quorum</strong> so one misbehaving node can't act alone."}
+];
+
+function initExtra(){
+  const sel=document.getElementById('netSel');const out=document.getElementById('netOut');
+  if(!sel)return;
+  const R={
+    dead:["co-trap","Can't conclude that","No reply doesn't prove death — the node may be alive but slow, or only the reply was lost. Declaring it dead too eagerly causes false positives and duplicated work."],
+    lost:["co-trap","Can't conclude that","The request may well have arrived and run; only the reply got lost. You genuinely cannot tell the request didn't make it."],
+    done:["co-trap","Can't conclude that","It may have executed successfully — that's the scary case for non-idempotent actions like 'charge card'. Silence ≠ 'didn't happen'."],
+    retry:["co-cost","Only if idempotent","Retrying is safe only when the operation is idempotent (or fenced/deduplicated). Blindly retrying a non-idempotent action can double-charge or duplicate it."]
+  };
+  const upd=()=>{const r=R[sel.value];out.innerHTML=`<div class="callout ${r[0]}"><span class="co-tag">${r[1]}</span><p>${r[2]}</p></div>`;};
+  sel.addEventListener('change',upd);upd();
+}
+
+
+const tabBar=document.getElementById('tabBar');
+const main=document.getElementById('main');
+DATA.forEach((s,i)=>{
+  const btn=document.createElement('button');
+  btn.className='tab-btn'+(i===0?' active':'');
+  btn.textContent=s.tab; btn.onclick=()=>showTab(i); tabBar.appendChild(btn);
+  const panel=document.createElement('section');
+  panel.className='tab-panel'+(i===0?' active':''); panel.id='panel-'+i;
+  panel.innerHTML=`<div class="stage"><div class="container"><div class="stage-header"><div class="stage-num-big">${s.num}</div><div><div class="stage-title">${s.title}</div><div class="stage-kicker">${s.kicker}</div></div></div><div class="body-wrap"><div class="spacer"></div><div class="prose">${s.body}</div></div></div></div>`;
+  main.appendChild(panel);
+});
+function showTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  window.scrollTo({top:document.querySelector('.tabs').offsetTop-60,behavior:'smooth'});
+}
+const overlay=document.getElementById('overlay');
+function openSnip(key){const s=SNIPPETS[key];if(!s)return;
+  document.getElementById('mCat').textContent=s.cat;
+  document.getElementById('mQ').textContent=s.title;
+  document.getElementById('mBody').innerHTML=s.body;
+  overlay.classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(){overlay.classList.remove('open');document.body.style.overflow='';}
+document.getElementById('closeBtn').onclick=closeModal;
+overlay.onclick=e=>{if(e.target===overlay)closeModal();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+// dropdown
+const drop=document.getElementById('chDrop');
+document.getElementById('chDropBtn').onclick=e=>{e.stopPropagation();drop.classList.toggle('open');};
+document.addEventListener('click',()=>drop.classList.remove('open'));
+// generic quiz mounter: window.QUIZ + #quizMount
+function mountQuiz(){
+  if(typeof QUIZ==='undefined')return;
+  const qm=document.getElementById('quizMount'); if(!qm)return;
+  QUIZ.forEach((item,qi)=>{
+    const box=document.createElement('div');box.className='quiz';
+    let html=`<div class="q">${qi+1}. ${item.q}</div>`;
+    item.opts.forEach((o,oi)=>{html+=`<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`;});
+    html+=`<div class="explain" id="ex-${qi}">${item.ex}</div>`;
+    box.innerHTML=html;qm.appendChild(box);
+  });
+  qm.addEventListener('click',e=>{
+    const b=e.target.closest('.opt');if(!b)return;
+    const box=b.closest('.quiz');if(box.dataset.done)return;box.dataset.done='1';
+    const qi=+b.dataset.q,oi=+b.dataset.o,correct=QUIZ[qi].correct;
+    box.querySelectorAll('.opt').forEach((opt,idx)=>{
+      if(idx===correct)opt.classList.add('correct');else if(idx===oi)opt.classList.add('wrong');
+      opt.style.cursor='default';});
+    document.getElementById('ex-'+qi).classList.add('show');
+  });
+}
+mountQuiz();
+if(typeof initExtra==='function'){try{initExtra();}catch(e){console.error(e);}}
+
+</script>
+</body>
+</html>
